@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "1053580752418",
+    "project_id": "ai-mood-2d7d0",
+    "storage_bucket": "ai-mood-2d7d0.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1053580752418:android:7b716f642c6d34c831fc7b",
+        "android_client_info": {
+          "package_name": "com.example.ai_mood"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1053580752418-ci46ambam0a6h8pp00pe1jq6t4bhs68l.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAL8HbbchxRU8n3qBh3pwZC7nKspq_XWA0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1053580752418-ci46ambam0a6h8pp00pe1jq6t4bhs68l.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
