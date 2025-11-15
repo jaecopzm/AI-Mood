@@ -1,33 +1,36 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 /// Environment configuration manager
 class EnvConfig {
+  static bool _isInitialized = false;
+  
+  // Configuration constants - works on all platforms
+  static const String _cloudflareAccountId = '580289486be253af98dc84ab2653ffab';
+  static const String _cloudflareApiToken = 'dXQ6uAwzphRXCIVILqMyzK-ZARZSk9cFMUIOSHP-';
+  static const String _environment = 'development';
+  
   /// Initialize environment configuration
   static Future<void> initialize() async {
-    await dotenv.load(fileName: '.env');
+    if (_isInitialized) return;
+    
+    print('🔧 Environment configuration initialized');
+    print('📱 Platform: ${kIsWeb ? "Web" : "Mobile/Desktop"}');
+    _isInitialized = true;
   }
 
   /// Get Cloudflare Account ID
   static String get cloudflareAccountId {
-    final value = dotenv.env['CLOUDFLARE_ACCOUNT_ID'];
-    if (value == null || value.isEmpty) {
-      throw Exception('CLOUDFLARE_ACCOUNT_ID not found in environment');
-    }
-    return value;
+    return _cloudflareAccountId;
   }
 
   /// Get Cloudflare API Token
   static String get cloudflareApiToken {
-    final value = dotenv.env['CLOUDFLARE_API_TOKEN'];
-    if (value == null || value.isEmpty) {
-      throw Exception('CLOUDFLARE_API_TOKEN not found in environment');
-    }
-    return value;
+    return _cloudflareApiToken;
   }
-
   /// Get environment name (development, staging, production)
   static String get environment {
-    return dotenv.env['ENVIRONMENT'] ?? 'development';
+    return _environment;
   }
 
   /// Check if running in development mode

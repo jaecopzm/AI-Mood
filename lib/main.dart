@@ -17,24 +17,33 @@ void main() async {
 
   try {
     // Initialize environment configuration
-    LoggerService.info('Initializing environment configuration...');
-    await EnvConfig.initialize();
+    print('🔧 Initializing environment configuration...');
+    try {
+      await EnvConfig.initialize();
+      print('✅ Environment configuration loaded');
+    } catch (e) {
+      print('⚠️ Environment file not found, using defaults');
+      // Continue without .env file - app can still work
+    }
 
     // Initialize Firebase
-    LoggerService.info('Initializing Firebase...');
+    print('🔧 Initializing Firebase...');
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
+    print('✅ Firebase initialized');
 
     // Initialize Hive for local storage
-    LoggerService.info('Initializing Hive...');
+    print('🔧 Initializing Hive...');
     await Hive.initFlutter();
+    print('✅ Hive initialized');
 
     // Setup dependency injection
-    LoggerService.info('Setting up dependency injection...');
+    print('🔧 Setting up dependency injection...');
     await setupServiceLocator();
+    print('✅ Dependency injection setup complete');
 
-    LoggerService.info('App initialization completed successfully');
+    print('🎉 App initialization completed successfully!');
 
     // Run the app
     runApp(const ProviderScope(child: MainApp()));
