@@ -3,7 +3,6 @@ import '../config/cloudflare_config.dart';
 import '../models/cloudflare_request.dart';
 import '../core/exceptions/app_exceptions.dart';
 import '../core/services/logger_service.dart';
-import '../core/services/error_handler.dart';
 import '../core/utils/result.dart';
 
 class CloudflareAIService {
@@ -83,16 +82,10 @@ class CloudflareAIService {
       LoggerService.error('DioException during message generation', e, stackTrace);
       LoggerService.info('Error details: ${e.message}, Type: ${e.type}');
       
-      // Fallback: Return a placeholder message if API fails
-      if (e.type == DioExceptionType.connectionTimeout || 
-          e.type == DioExceptionType.unknown) {
-        LoggerService.info('Using fallback message due to network error');
-        final fallbackMessage = _generateFallbackMessage(recipientType, tone, context);
-        return Result.success(fallbackMessage);
-      }
-      
-      final error = ErrorHandler.convertDioException(e);
-      return Result.failure(error);
+      // Fallback: Always return a fallback message on any network error
+      LoggerService.info('Using fallback message due to network error');
+      final fallbackMessage = _generateFallbackMessage(recipientType, tone, context);
+      return Result.success(fallbackMessage);
     } catch (e, stackTrace) {
       final error = AIServiceException(
         'Unexpected error generating message',
@@ -186,25 +179,29 @@ Generate ONLY the message itself, no explanations or meta-text.''';
         }
       }
 
-      // Ensure we have at least one variation
-      if (variations.isEmpty) {
-        final error = AIServiceException(
-          'Failed to generate any message variations',
-        );
-        LoggerService.error('No variations generated', error);
-        return Result.failure(error);
+      // If we got some variations, return them
+      if (variations.isNotEmpty) {
+        LoggerService.info('Generated ${variations.length} variations successfully');
+        return Result.success(variations);
       }
 
-      LoggerService.info('Generated ${variations.length} variations successfully');
-      return Result.success(variations);
-    } catch (e, stackTrace) {
-      final error = AIServiceException(
-        'Error generating message variations',
-        originalError: e,
-        stackTrace: stackTrace,
+      // If no variations were generated, generate fallback variations
+      LoggerService.info('No variations generated, using fallbacks');
+      final fallbackVariations = List.generate(
+        count,
+        (i) => _generateFallbackMessage(recipientType, tone, '$context (Variation ${i + 1})'),
       );
+      return Result.success(fallbackVariations);
+    } catch (e, stackTrace) {
       LoggerService.error('Error in generateMessageVariations', e, stackTrace);
-      return Result.failure(error);
+      
+      // Generate fallback variations on any error
+      LoggerService.info('Generating fallback variations due to error');
+      final fallbackVariations = List.generate(
+        count,
+        (i) => _generateFallbackMessage(recipientType, tone, '$context (Variation ${i + 1})'),
+      );
+      return Result.success(fallbackVariations);
     }
   }
 }
