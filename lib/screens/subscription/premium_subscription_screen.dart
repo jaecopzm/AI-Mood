@@ -426,7 +426,7 @@ class _PremiumSubscriptionScreenState extends State<PremiumSubscriptionScreen>
                         ],
                       ),
                     );
-                  }).toList(),
+                  }),
                 ],
               ),
             ),

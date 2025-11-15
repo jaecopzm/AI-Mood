@@ -5,6 +5,9 @@ import '../../widgets/premium_widgets.dart';
 import '../../config/app_config.dart';
 import '../../providers/message_provider.dart';
 import '../../providers/auth_provider.dart';
+import '../../services/clipboard_service.dart';
+import '../../services/share_service.dart';
+import '../../services/greeting_service.dart';
 
 class PremiumHomeScreen extends ConsumerStatefulWidget {
   const PremiumHomeScreen({super.key});
@@ -113,8 +116,170 @@ class _PremiumHomeScreenState extends ConsumerState<PremiumHomeScreen>
     );
   }
 
+  Future<void> _copyToClipboard() async {
+    if (_generatedMessages.isEmpty) return;
+    
+    final text = _generatedMessages[_selectedMessageIndex];
+    final result = await ClipboardService.copyToClipboard(text);
+    
+    result.when(
+      success: (_) => _showSnackBar('✅ Copied to clipboard!', isError: false),
+      failure: (error) => _showSnackBar('Failed to copy', isError: true),
+    );
+  }
+
+  Future<void> _showShareOptions() async {
+    if (_generatedMessages.isEmpty) return;
+    
+    final text = _generatedMessages[_selectedMessageIndex];
+    
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        decoration: BoxDecoration(
+          color: PremiumTheme.cardBackground,
+          borderRadius: const BorderRadius.vertical(
+            top: Radius.circular(PremiumTheme.radiusLg),
+          ),
+        ),
+        padding: const EdgeInsets.all(PremiumTheme.spaceLg),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: PremiumTheme.textSecondary.withOpacity(0.3),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: PremiumTheme.spaceLg),
+            Text(
+              'Share Message',
+              style: PremiumTheme.heading3.copyWith(
+                color: PremiumTheme.textPrimary,
+              ),
+            ),
+            const SizedBox(height: PremiumTheme.spaceLg),
+            _buildShareOption(
+              icon: Icons.share,
+              title: 'Share via...',
+              subtitle: 'Use native share dialog',
+              onTap: () async {
+                Navigator.pop(context);
+                final result = await ShareService.shareText(text);
+                result.when(
+                  success: (_) => _showSnackBar('Shared!', isError: false),
+                  failure: (error) => _showSnackBar('Failed to share', isError: true),
+                );
+              },
+            ),
+            _buildShareOption(
+              icon: Icons.message,
+              title: 'WhatsApp',
+              subtitle: 'Share to WhatsApp',
+              color: const Color(0xFF25D366),
+              onTap: () async {
+                Navigator.pop(context);
+                final result = await ShareService.shareToWhatsApp(text);
+                result.when(
+                  success: (_) => _showSnackBar('Opening WhatsApp...', isError: false),
+                  failure: (error) => _showSnackBar('WhatsApp not available', isError: true),
+                );
+              },
+            ),
+            _buildShareOption(
+              icon: Icons.sms,
+              title: 'SMS',
+              subtitle: 'Send via text message',
+              color: const Color(0xFF34C759),
+              onTap: () async {
+                Navigator.pop(context);
+                final result = await ShareService.shareToSMS(text);
+                result.when(
+                  success: (_) => _showSnackBar('Opening SMS...', isError: false),
+                  failure: (error) => _showSnackBar('SMS not available', isError: true),
+                );
+              },
+            ),
+            _buildShareOption(
+              icon: Icons.email,
+              title: 'Email',
+              subtitle: 'Send via email',
+              color: const Color(0xFFFF9500),
+              onTap: () async {
+                Navigator.pop(context);
+                final result = await ShareService.shareToEmail(text);
+                result.when(
+                  success: (_) => _showSnackBar('Opening Email...', isError: false),
+                  failure: (error) => _showSnackBar('Email not available', isError: true),
+                );
+              },
+            ),
+            _buildShareOption(
+              icon: Icons.sports_basketball,
+              title: 'Twitter',
+              subtitle: 'Post to Twitter',
+              color: const Color(0xFF1DA1F2),
+              onTap: () async {
+                Navigator.pop(context);
+                final result = await ShareService.shareToTwitter(text);
+                result.when(
+                  success: (_) => _showSnackBar('Opening Twitter...', isError: false),
+                  failure: (error) => _showSnackBar('Twitter not available', isError: true),
+                );
+              },
+            ),
+            const SizedBox(height: PremiumTheme.spaceMd),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildShareOption({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required VoidCallback onTap,
+    Color? color,
+  }) {
+    return ListTile(
+      leading: Container(
+        padding: const EdgeInsets.all(PremiumTheme.spaceSm),
+        decoration: BoxDecoration(
+          color: (color ?? PremiumTheme.primary).withOpacity(0.1),
+          borderRadius: BorderRadius.circular(PremiumTheme.radiusSm),
+        ),
+        child: Icon(icon, color: color ?? PremiumTheme.primary, size: 24),
+      ),
+      title: Text(
+        title,
+        style: PremiumTheme.bodyLarge.copyWith(
+          color: PremiumTheme.textPrimary,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+      subtitle: Text(
+        subtitle,
+        style: PremiumTheme.bodySmall.copyWith(
+          color: PremiumTheme.textSecondary,
+        ),
+      ),
+      onTap: onTap,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(PremiumTheme.radiusMd),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final authState = ref.watch(authStateProvider);
+    final messageState = ref.watch(messageProvider);
+    
     return Scaffold(
       body: Container(
         decoration: BoxDecoration(
@@ -134,8 +299,11 @@ class _PremiumHomeScreenState extends ConsumerState<PremiumHomeScreen>
               // App Bar
               SliverToBoxAdapter(child: _buildAppBar()),
 
-              // Stats Section
-              SliverToBoxAdapter(child: _buildStatsSection()),
+              // Greeting Section
+              SliverToBoxAdapter(child: _buildGreetingSection(authState)),
+
+              // Quick Stats
+              SliverToBoxAdapter(child: _buildQuickStatsCard(messageState)),
 
               // Quick Actions
               SliverToBoxAdapter(child: _buildQuickActions()),
@@ -154,6 +322,133 @@ class _PremiumHomeScreenState extends ConsumerState<PremiumHomeScreen>
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildGreetingSection(AuthState authState) {
+    final user = authState.user;
+    final greeting = GreetingService.getPersonalizedGreeting(user);
+    final motivation = GreetingService.getMotivationalMessage();
+    
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: PremiumTheme.spaceLg),
+      child: Container(
+        padding: const EdgeInsets.all(PremiumTheme.spaceLg),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              PremiumTheme.primary.withOpacity(0.1),
+              PremiumTheme.secondary.withOpacity(0.1),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(PremiumTheme.radiusLg),
+          border: Border.all(
+            color: PremiumTheme.primary.withOpacity(0.2),
+            width: 1,
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              greeting,
+              style: PremiumTheme.heading2.copyWith(
+                color: PremiumTheme.textPrimary,
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: PremiumTheme.spaceSm),
+            Text(
+              motivation,
+              style: PremiumTheme.bodyMedium.copyWith(
+                color: PremiumTheme.textSecondary,
+                fontSize: 15,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildQuickStatsCard(MessageState messageState) {
+    final user = ref.read(authStateProvider).user;
+    final messageCount = user?.totalMessagesGenerated ?? 0;
+    final statsMessage = GreetingService.getStatsEncouragement(messageCount);
+    final tip = GreetingService.getContextualTip();
+    
+    return Padding(
+      padding: const EdgeInsets.all(PremiumTheme.spaceLg),
+      child: Column(
+        children: [
+          // Stats card
+          Container(
+            padding: const EdgeInsets.all(PremiumTheme.spaceMd),
+            decoration: BoxDecoration(
+              color: PremiumTheme.cardBackground,
+              borderRadius: BorderRadius.circular(PremiumTheme.radiusMd),
+              border: Border.all(
+                color: PremiumTheme.primary.withOpacity(0.1),
+              ),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(PremiumTheme.spaceSm),
+                  decoration: BoxDecoration(
+                    gradient: PremiumTheme.primaryGradient,
+                    borderRadius: BorderRadius.circular(PremiumTheme.radiusSm),
+                  ),
+                  child: const Icon(Icons.emoji_events, color: Colors.white, size: 20),
+                ),
+                const SizedBox(width: PremiumTheme.spaceMd),
+                Expanded(
+                  child: Text(
+                    statsMessage,
+                    style: PremiumTheme.bodyMedium.copyWith(
+                      color: PremiumTheme.textPrimary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: PremiumTheme.spaceMd),
+          // Tip card
+          Container(
+            padding: const EdgeInsets.all(PremiumTheme.spaceMd),
+            decoration: BoxDecoration(
+              color: PremiumTheme.accent.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(PremiumTheme.radiusMd),
+              border: Border.all(
+                color: PremiumTheme.accent.withOpacity(0.2),
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.lightbulb_outline,
+                  color: PremiumTheme.accent,
+                  size: 20,
+                ),
+                const SizedBox(width: PremiumTheme.spaceMd),
+                Expanded(
+                  child: Text(
+                    tip,
+                    style: PremiumTheme.bodySmall.copyWith(
+                      color: PremiumTheme.textSecondary,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -208,42 +503,6 @@ class _PremiumHomeScreenState extends ConsumerState<PremiumHomeScreen>
                   ),
                 ),
               ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStatsSection() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: PremiumTheme.spaceLg),
-      child: Row(
-        children: [
-          Expanded(
-            child: StatsCard(
-              icon: Icons.edit_note,
-              value: '47',
-              label: 'Messages',
-              gradient: PremiumTheme.primaryGradient,
-            ),
-          ),
-          const SizedBox(width: PremiumTheme.spaceMd),
-          Expanded(
-            child: StatsCard(
-              icon: Icons.favorite,
-              value: '12',
-              label: 'Favorites',
-              gradient: PremiumTheme.secondaryGradient,
-            ),
-          ),
-          const SizedBox(width: PremiumTheme.spaceMd),
-          Expanded(
-            child: StatsCard(
-              icon: Icons.trending_up,
-              value: '94%',
-              label: 'Success',
-              gradient: PremiumTheme.successGradient,
             ),
           ),
         ],
@@ -610,22 +869,16 @@ class _PremiumHomeScreenState extends ConsumerState<PremiumHomeScreen>
                           text: 'Copy',
                           icon: Icons.copy,
                           gradient: PremiumTheme.accentGradient,
-                          onPressed: () {
-                            // Copy to clipboard logic
-                            _showSnackBar('Copied to clipboard!', isError: false);
-                          },
+                          onPressed: _copyToClipboard,
                         ),
                       ),
                       const SizedBox(width: PremiumTheme.spaceSm),
                       Expanded(
                         child: PremiumButton(
-                          text: 'Save',
-                          icon: Icons.bookmark,
+                          text: 'Share',
+                          icon: Icons.share,
                           gradient: PremiumTheme.goldGradient,
-                          onPressed: () {
-                            // Save message logic
-                            _showSnackBar('Message saved!', isError: false);
-                          },
+                          onPressed: _showShareOptions,
                         ),
                       ),
                     ],

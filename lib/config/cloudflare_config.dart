@@ -1,11 +1,15 @@
+import '../core/config/env_config.dart';
+
 // Cloudflare AI Configuration
 class CloudflareConfig {
-  // Replace with your Cloudflare account details
-  static const String accountId = '580289486be253af98dc84ab2653ffab';
-  static const String apiToken = 'dXQ6uAwzphRXCIVILqMyzK-ZARZSk9cFMUIOSHP-';
+  // Get account ID from environment
+  static String get accountId => EnvConfig.cloudflareAccountId;
+  
+  // Get API token from environment
+  static String get apiToken => EnvConfig.cloudflareApiToken;
 
   // Cloudflare AI endpoint
-  static const String baseUrl =
+  static String get baseUrl =>
       'https://api.cloudflare.com/client/v4/accounts/$accountId/ai/run';
 
   // Model selection

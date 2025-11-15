@@ -1,16 +1,76 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'firebase_options.dart';
 import 'config/premium_theme.dart';
-import 'screens/auth/signin_screen.dart';
+import 'screens/auth/premium_signin_screen.dart';
 import 'screens/auth/signup_screen.dart';
 import 'screens/premium_main_screen.dart';
+import 'core/config/env_config.dart';
+import 'core/di/service_locator.dart';
+import 'core/services/logger_service.dart';
 
 void main() async {
+  // Ensure Flutter binding is initialized
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  runApp(const ProviderScope(child: MainApp()));
+
+  try {
+    // Initialize environment configuration
+    LoggerService.info('Initializing environment configuration...');
+    await EnvConfig.initialize();
+
+    // Initialize Firebase
+    LoggerService.info('Initializing Firebase...');
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+
+    // Initialize Hive for local storage
+    LoggerService.info('Initializing Hive...');
+    await Hive.initFlutter();
+
+    // Setup dependency injection
+    LoggerService.info('Setting up dependency injection...');
+    await setupServiceLocator();
+
+    LoggerService.info('App initialization completed successfully');
+
+    // Run the app
+    runApp(const ProviderScope(child: MainApp()));
+  } catch (e, stackTrace) {
+    LoggerService.fatal('Failed to initialize app', e, stackTrace);
+    
+    // Show error screen
+    runApp(
+      MaterialApp(
+        home: Scaffold(
+          body: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.error_outline, size: 64, color: Colors.red),
+                  const SizedBox(height: 24),
+                  const Text(
+                    'Failed to Initialize App',
+                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Error: ${e.toString()}',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(color: Colors.red),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class MainApp extends StatefulWidget {
@@ -45,7 +105,6 @@ class _MainAppState extends State<MainApp> {
     setState(() => _isSignUp = false);
   }
 
-
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -61,7 +120,7 @@ class _MainAppState extends State<MainApp> {
                     onSignUpSuccess: _handleSignUpSuccess,
                     onNavigateToSignIn: _navigateToSignIn,
                   )
-                : SignInScreen(
+                : PremiumSignInScreen(
                     onSignInSuccess: _handleSignInSuccess,
                     onNavigateToSignUp: _navigateToSignUp,
                   )),

@@ -453,7 +453,7 @@ class _PremiumProfileScreenState extends ConsumerState<PremiumProfileScreen> {
                     onChanged: (value) {
                       setState(() => _isDarkMode = value);
                     },
-                    activeColor: PremiumTheme.primary,
+                    activeThumbColor: PremiumTheme.primary,
                   ),
                 ),
                 _buildDivider(),
@@ -466,7 +466,7 @@ class _PremiumProfileScreenState extends ConsumerState<PremiumProfileScreen> {
                     onChanged: (value) {
                       setState(() => _notificationsEnabled = value);
                     },
-                    activeColor: PremiumTheme.primary,
+                    activeThumbColor: PremiumTheme.primary,
                   ),
                 ),
                 _buildDivider(),

@@ -22,15 +22,28 @@ class User {
 
   factory User.fromJson(Map<String, dynamic> json) {
     return User(
-      uid: json['uid'] ?? '',
-      email: json['email'] ?? '',
-      displayName: json['displayName'] ?? '',
-      subscriptionTier: json['subscriptionTier'] ?? 'free',
-      createdAt: DateTime.parse(json['createdAt'] ?? DateTime.now().toString()),
-      updatedAt: DateTime.parse(json['updatedAt'] ?? DateTime.now().toString()),
-      monthlyCreditsUsed: json['monthlyCreditsUsed'] ?? 0,
-      totalMessagesGenerated: json['totalMessagesGenerated'] ?? 0,
+      uid: json['uid'] as String? ?? '',
+      email: json['email'] as String? ?? '',
+      displayName: json['displayName'] as String? ?? '',
+      subscriptionTier: json['subscriptionTier'] as String? ?? 'free',
+      createdAt: _parseDateTime(json['createdAt']),
+      updatedAt: _parseDateTime(json['updatedAt']),
+      monthlyCreditsUsed: json['monthlyCreditsUsed'] as int? ?? 0,
+      totalMessagesGenerated: json['totalMessagesGenerated'] as int? ?? 0,
     );
+  }
+
+  static DateTime _parseDateTime(dynamic value) {
+    if (value == null) return DateTime.now();
+    if (value is DateTime) return value;
+    if (value is String) {
+      try {
+        return DateTime.parse(value);
+      } catch (e) {
+        return DateTime.now();
+      }
+    }
+    return DateTime.now();
   }
 
   Map<String, dynamic> toJson() {
@@ -68,14 +81,27 @@ class Subscription {
 
   factory Subscription.fromJson(Map<String, dynamic> json) {
     return Subscription(
-      subscriptionId: json['subscriptionId'] ?? '',
-      userId: json['userId'] ?? '',
-      planType: json['planType'] ?? 'free',
-      startDate: DateTime.parse(json['startDate'] ?? DateTime.now().toString()),
-      endDate: json['endDate'] != null ? DateTime.parse(json['endDate']) : null,
-      isActive: json['isActive'] ?? false,
-      paymentMethod: json['paymentMethod'] ?? '',
+      subscriptionId: json['subscriptionId'] as String? ?? '',
+      userId: json['userId'] as String? ?? '',
+      planType: json['planType'] as String? ?? 'free',
+      startDate: _parseDateTime(json['startDate']),
+      endDate: json['endDate'] != null ? _parseDateTime(json['endDate']) : null,
+      isActive: json['isActive'] as bool? ?? false,
+      paymentMethod: json['paymentMethod'] as String? ?? '',
     );
+  }
+
+  static DateTime _parseDateTime(dynamic value) {
+    if (value == null) return DateTime.now();
+    if (value is DateTime) return value;
+    if (value is String) {
+      try {
+        return DateTime.parse(value);
+      } catch (e) {
+        return DateTime.now();
+      }
+    }
+    return DateTime.now();
   }
 
   Map<String, dynamic> toJson() {
@@ -116,16 +142,29 @@ class GeneratedMessage {
 
   factory GeneratedMessage.fromJson(Map<String, dynamic> json) {
     return GeneratedMessage(
-      messageId: json['messageId'] ?? '',
-      userId: json['userId'] ?? '',
-      recipientType: json['recipientType'] ?? '',
-      tone: json['tone'] ?? '',
-      content: json['content'] ?? '',
-      context: json['context'] ?? '',
-      createdAt: DateTime.parse(json['createdAt'] ?? DateTime.now().toString()),
-      isSaved: json['isSaved'] ?? false,
-      rating: json['rating'] ?? 0,
+      messageId: json['messageId'] as String? ?? '',
+      userId: json['userId'] as String? ?? '',
+      recipientType: json['recipientType'] as String? ?? '',
+      tone: json['tone'] as String? ?? '',
+      content: json['content'] as String? ?? '',
+      context: json['context'] as String? ?? '',
+      createdAt: _parseDateTime(json['createdAt']),
+      isSaved: json['isSaved'] as bool? ?? false,
+      rating: json['rating'] as int? ?? 0,
     );
+  }
+
+  static DateTime _parseDateTime(dynamic value) {
+    if (value == null) return DateTime.now();
+    if (value is DateTime) return value;
+    if (value is String) {
+      try {
+        return DateTime.parse(value);
+      } catch (e) {
+        return DateTime.now();
+      }
+    }
+    return DateTime.now();
   }
 
   Map<String, dynamic> toJson() {

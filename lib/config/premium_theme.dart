@@ -52,6 +52,7 @@ class PremiumTheme {
   static const Color surfaceVariant = Color(0xFFF8FAFC);
   static const Color surfaceElevated = Color(0xFFFFFFFF);
   static const Color surfaceDim = Color(0xFFF1F5F9);
+  static const Color cardBackground = Color(0xFFFAFAFC);
   
   // Text Colors
   static const Color textPrimary = Color(0xFF0F172A);
@@ -293,6 +294,22 @@ class PremiumTheme {
   
   static const TextStyle headlineSmall = TextStyle(
     fontSize: 18,
+    fontWeight: FontWeight.w600,
+    letterSpacing: 0,
+    height: 1.4,
+    color: textPrimary,
+  );
+
+  static const TextStyle heading2 = TextStyle(
+    fontSize: 28,
+    fontWeight: FontWeight.bold,
+    letterSpacing: -0.5,
+    height: 1.2,
+    color: textPrimary,
+  );
+
+  static const TextStyle heading3 = TextStyle(
+    fontSize: 20,
     fontWeight: FontWeight.w600,
     letterSpacing: 0,
     height: 1.4,

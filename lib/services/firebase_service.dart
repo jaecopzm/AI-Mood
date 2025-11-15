@@ -2,20 +2,34 @@ import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import '../models/user_model.dart';
-
 import '../models/message_model.dart';
+import '../core/exceptions/app_exceptions.dart';
+import '../core/services/logger_service.dart';
+import '../core/services/error_handler.dart';
+import '../core/utils/result.dart';
 
 class FirebaseService {
-  final firebase_auth.FirebaseAuth _auth = firebase_auth.FirebaseAuth.instance;
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final firebase_auth.FirebaseAuth _auth;
+  final FirebaseFirestore _firestore;
+  final GoogleSignIn _googleSignIn;
+
+  FirebaseService({
+    firebase_auth.FirebaseAuth? auth,
+    FirebaseFirestore? firestore,
+    GoogleSignIn? googleSignIn,
+  })  : _auth = auth ?? firebase_auth.FirebaseAuth.instance,
+        _firestore = firestore ?? FirebaseFirestore.instance,
+        _googleSignIn = googleSignIn ?? GoogleSignIn();
 
   // Auth Methods
-  Future<firebase_auth.UserCredential?> signUp({
+  Future<Result<firebase_auth.UserCredential>> signUp({
     required String email,
     required String password,
     required String displayName,
   }) async {
     try {
+      LoggerService.info('Attempting to sign up user: $email');
+
       final userCredential = await _auth.createUserWithEmailAndPassword(
         email: email,
         password: password,
@@ -27,56 +41,108 @@ class FirebaseService {
       // Create user document in Firestore
       if (userCredential.user != null) {
         await _createUserDocument(userCredential.user!);
+        LoggerService.info('User signed up successfully: ${userCredential.user!.uid}');
       }
 
-      return userCredential;
-    } catch (e) {
-      throw Exception('Sign up failed: $e');
+      return Result.success(userCredential);
+    } on firebase_auth.FirebaseAuthException catch (e, stackTrace) {
+      final error = ErrorHandler.convertFirebaseException(e);
+      LoggerService.error('Sign up failed', e, stackTrace);
+      return Result.failure(error);
+    } catch (e, stackTrace) {
+      final error = AuthException(
+        'Sign up failed: ${e.toString()}',
+        originalError: e,
+        stackTrace: stackTrace,
+      );
+      LoggerService.error('Unexpected error during sign up', e, stackTrace);
+      return Result.failure(error);
     }
   }
 
-  Future<firebase_auth.UserCredential?> signIn({
+  Future<Result<firebase_auth.UserCredential>> signIn({
     required String email,
     required String password,
   }) async {
     try {
+      LoggerService.info('Attempting to sign in user: $email');
+
       final userCredential = await _auth.signInWithEmailAndPassword(
         email: email,
         password: password,
       );
-      return userCredential;
-    } catch (e) {
-      throw Exception('Sign in failed: $e');
+
+      LoggerService.info('User signed in successfully: ${userCredential.user?.uid}');
+      return Result.success(userCredential);
+    } on firebase_auth.FirebaseAuthException catch (e, stackTrace) {
+      final error = ErrorHandler.convertFirebaseException(e);
+      LoggerService.error('Sign in failed', e, stackTrace);
+      return Result.failure(error);
+    } catch (e, stackTrace) {
+      final error = AuthException(
+        'Sign in failed: ${e.toString()}',
+        originalError: e,
+        stackTrace: stackTrace,
+      );
+      LoggerService.error('Unexpected error during sign in', e, stackTrace);
+      return Result.failure(error);
     }
   }
 
-  Future<void> signOut() async {
+  Future<Result<void>> signOut() async {
     try {
+      LoggerService.info('Signing out user');
       await _auth.signOut();
-    } catch (e) {
-      throw Exception('Sign out failed: $e');
+      await _googleSignIn.signOut();
+      LoggerService.info('User signed out successfully');
+      return Result.success(null);
+    } catch (e, stackTrace) {
+      final error = AuthException(
+        'Sign out failed',
+        originalError: e,
+        stackTrace: stackTrace,
+      );
+      LoggerService.error('Sign out failed', e, stackTrace);
+      return Result.failure(error);
     }
   }
 
-  Future<void> resetPassword(String email) async {
+  Future<Result<void>> resetPassword(String email) async {
     try {
+      LoggerService.info('Sending password reset email to: $email');
       await _auth.sendPasswordResetEmail(email: email);
-    } catch (e) {
-      throw Exception('Password reset failed: $e');
+      LoggerService.info('Password reset email sent successfully');
+      return Result.success(null);
+    } on firebase_auth.FirebaseAuthException catch (e, stackTrace) {
+      final error = ErrorHandler.convertFirebaseException(e);
+      LoggerService.error('Password reset failed', e, stackTrace);
+      return Result.failure(error);
+    } catch (e, stackTrace) {
+      final error = AuthException(
+        'Password reset failed',
+        originalError: e,
+        stackTrace: stackTrace,
+      );
+      LoggerService.error('Unexpected error during password reset', e, stackTrace);
+      return Result.failure(error);
     }
   }
 
-  Future<firebase_auth.UserCredential?> signInWithGoogle() async {
+  Future<Result<firebase_auth.UserCredential>> signInWithGoogle() async {
     try {
-      final GoogleSignIn googleSignIn = GoogleSignIn();
-      final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
+      LoggerService.info('Attempting Google sign-in');
+
+      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
 
       if (googleUser == null) {
-        throw Exception('Google sign-in cancelled');
+        final error = AuthException('Google sign-in was cancelled by user');
+        LoggerService.warning('Google sign-in cancelled');
+        return Result.failure(error);
       }
 
       final GoogleSignInAuthentication googleAuth =
           await googleUser.authentication;
+
       final firebase_auth.AuthCredential credential =
           firebase_auth.GoogleAuthProvider.credential(
         accessToken: googleAuth.accessToken,
@@ -88,21 +154,43 @@ class FirebaseService {
       // Create user document in Firestore if new user
       if (userCredential.user != null) {
         await _createUserDocument(userCredential.user!);
+        LoggerService.info('Google sign-in successful: ${userCredential.user!.uid}');
       }
 
-      return userCredential;
-    } catch (e) {
-      throw Exception('Google sign-in failed: $e');
+      return Result.success(userCredential);
+    } on firebase_auth.FirebaseAuthException catch (e, stackTrace) {
+      final error = ErrorHandler.convertFirebaseException(e);
+      LoggerService.error('Google sign-in failed', e, stackTrace);
+      return Result.failure(error);
+    } catch (e, stackTrace) {
+      final error = AuthException(
+        'Google sign-in failed',
+        originalError: e,
+        stackTrace: stackTrace,
+      );
+      LoggerService.error('Unexpected error during Google sign-in', e, stackTrace);
+      return Result.failure(error);
     }
   }
 
   // User Document Methods
   Future<void> _createUserDocument(firebase_auth.User firebaseUser) async {
     try {
+      // Check if user document already exists
+      final doc = await _firestore
+          .collection('users')
+          .doc(firebaseUser.uid)
+          .get();
+
+      if (doc.exists) {
+        LoggerService.info('User document already exists for: ${firebaseUser.uid}');
+        return;
+      }
+
       final user = User(
         uid: firebaseUser.uid,
-        email: firebaseUser.email!,
-        displayName: firebaseUser.displayName ?? '',
+        email: firebaseUser.email ?? '',
+        displayName: firebaseUser.displayName ?? 'User',
         subscriptionTier: 'free',
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
@@ -114,46 +202,92 @@ class FirebaseService {
           .collection('users')
           .doc(firebaseUser.uid)
           .set(user.toJson());
-    } catch (e) {
-      throw Exception('Failed to create user document: $e');
+
+      LoggerService.info('User document created: ${firebaseUser.uid}');
+    } on FirebaseException catch (e, stackTrace) {
+      LoggerService.error('Failed to create user document', e, stackTrace);
+      throw DatabaseException(
+        'Failed to create user profile',
+        originalError: e,
+        stackTrace: stackTrace,
+      );
+    } catch (e, stackTrace) {
+      LoggerService.error('Unexpected error creating user document', e, stackTrace);
+      throw DatabaseException(
+        'Failed to create user profile',
+        originalError: e,
+        stackTrace: stackTrace,
+      );
     }
   }
 
-  Future<User?> getCurrentUser() async {
+  Future<Result<User>> getCurrentUser() async {
     try {
       final firebaseUser = _auth.currentUser;
-      if (firebaseUser == null) return null;
+      if (firebaseUser == null) {
+        return Result.failure(AuthException('No user is currently signed in'));
+      }
 
       final doc = await _firestore
           .collection('users')
           .doc(firebaseUser.uid)
           .get();
 
-      if (doc.exists) {
-        return User.fromJson(doc.data() ?? {});
+      if (doc.exists && doc.data() != null) {
+        final user = User.fromJson(doc.data()!);
+        return Result.success(user);
       }
-      return null;
-    } catch (e) {
-      throw Exception('Failed to get current user: $e');
+
+      return Result.failure(NotFoundException('User profile not found'));
+    } on FirebaseException catch (e, stackTrace) {
+      LoggerService.error('Failed to get current user', e, stackTrace);
+      return Result.failure(DatabaseException(
+        'Failed to retrieve user profile',
+        originalError: e,
+        stackTrace: stackTrace,
+      ));
+    } catch (e, stackTrace) {
+      LoggerService.error('Unexpected error getting current user', e, stackTrace);
+      return Result.failure(DatabaseException(
+        'Failed to retrieve user profile',
+        originalError: e,
+        stackTrace: stackTrace,
+      ));
     }
   }
 
-  Future<User?> getUserById(String uid) async {
+  Future<Result<User>> getUserById(String uid) async {
     try {
       final doc = await _firestore.collection('users').doc(uid).get();
 
-      if (doc.exists) {
-        return User.fromJson(doc.data() ?? {});
+      if (doc.exists && doc.data() != null) {
+        final user = User.fromJson(doc.data()!);
+        return Result.success(user);
       }
-      return null;
-    } catch (e) {
-      throw Exception('Failed to get user: $e');
+
+      return Result.failure(NotFoundException('User not found'));
+    } on FirebaseException catch (e, stackTrace) {
+      LoggerService.error('Failed to get user by ID', e, stackTrace);
+      return Result.failure(DatabaseException(
+        'Failed to retrieve user',
+        originalError: e,
+        stackTrace: stackTrace,
+      ));
+    } catch (e, stackTrace) {
+      LoggerService.error('Unexpected error getting user by ID', e, stackTrace);
+      return Result.failure(DatabaseException(
+        'Failed to retrieve user',
+        originalError: e,
+        stackTrace: stackTrace,
+      ));
     }
   }
 
   // Message Methods
-  Future<void> saveMessage(MessageModel message) async {
+  Future<Result<void>> saveMessage(MessageModel message) async {
     try {
+      LoggerService.info('Saving message: ${message.id}');
+
       await _firestore
           .collection('messages')
           .doc(message.id)
@@ -161,41 +295,113 @@ class FirebaseService {
 
       // Update user message count
       await _updateUserMessageCount(message.userId);
-    } catch (e) {
-      throw Exception('Failed to save message: $e');
+
+      LoggerService.info('Message saved successfully: ${message.id}');
+      return Result.success(null);
+    } on FirebaseException catch (e, stackTrace) {
+      LoggerService.error('Failed to save message', e, stackTrace);
+      return Result.failure(DatabaseException(
+        'Failed to save message',
+        originalError: e,
+        stackTrace: stackTrace,
+      ));
+    } catch (e, stackTrace) {
+      LoggerService.error('Unexpected error saving message', e, stackTrace);
+      return Result.failure(DatabaseException(
+        'Failed to save message',
+        originalError: e,
+        stackTrace: stackTrace,
+      ));
     }
   }
 
-  Future<List<MessageModel>> getUserMessages(String userId) async {
+  Future<Result<List<MessageModel>>> getUserMessages(
+    String userId, {
+    int limit = 50,
+  }) async {
     try {
+      LoggerService.info('Fetching messages for user: $userId');
+
       final snapshot = await _firestore
           .collection('messages')
           .where('userId', isEqualTo: userId)
           .orderBy('createdAt', descending: true)
-          .limit(50)
+          .limit(limit)
           .get();
 
-      return snapshot.docs
+      final messages = snapshot.docs
           .map((doc) => MessageModel.fromJson(doc.data()))
           .toList();
-    } catch (e) {
-      throw Exception('Failed to get user messages: $e');
+
+      LoggerService.info('Fetched ${messages.length} messages');
+      return Result.success(messages);
+    } on FirebaseException catch (e, stackTrace) {
+      LoggerService.error('Failed to get user messages', e, stackTrace);
+      return Result.failure(DatabaseException(
+        'Failed to retrieve messages',
+        originalError: e,
+        stackTrace: stackTrace,
+      ));
+    } catch (e, stackTrace) {
+      LoggerService.error('Unexpected error getting user messages', e, stackTrace);
+      return Result.failure(DatabaseException(
+        'Failed to retrieve messages',
+        originalError: e,
+        stackTrace: stackTrace,
+      ));
     }
   }
 
-  Future<void> updateMessage(String messageId, Map<String, dynamic> updates) async {
+  Future<Result<void>> updateMessage(
+    String messageId,
+    Map<String, dynamic> updates,
+  ) async {
     try {
+      LoggerService.info('Updating message: $messageId');
+
       await _firestore.collection('messages').doc(messageId).update(updates);
-    } catch (e) {
-      throw Exception('Failed to update message: $e');
+
+      LoggerService.info('Message updated successfully: $messageId');
+      return Result.success(null);
+    } on FirebaseException catch (e, stackTrace) {
+      LoggerService.error('Failed to update message', e, stackTrace);
+      return Result.failure(DatabaseException(
+        'Failed to update message',
+        originalError: e,
+        stackTrace: stackTrace,
+      ));
+    } catch (e, stackTrace) {
+      LoggerService.error('Unexpected error updating message', e, stackTrace);
+      return Result.failure(DatabaseException(
+        'Failed to update message',
+        originalError: e,
+        stackTrace: stackTrace,
+      ));
     }
   }
 
-  Future<void> deleteMessage(String messageId) async {
+  Future<Result<void>> deleteMessage(String messageId) async {
     try {
+      LoggerService.info('Deleting message: $messageId');
+
       await _firestore.collection('messages').doc(messageId).delete();
-    } catch (e) {
-      throw Exception('Failed to delete message: $e');
+
+      LoggerService.info('Message deleted successfully: $messageId');
+      return Result.success(null);
+    } on FirebaseException catch (e, stackTrace) {
+      LoggerService.error('Failed to delete message', e, stackTrace);
+      return Result.failure(DatabaseException(
+        'Failed to delete message',
+        originalError: e,
+        stackTrace: stackTrace,
+      ));
+    } catch (e, stackTrace) {
+      LoggerService.error('Unexpected error deleting message', e, stackTrace);
+      return Result.failure(DatabaseException(
+        'Failed to delete message',
+        originalError: e,
+        stackTrace: stackTrace,
+      ));
     }
   }
 
@@ -289,10 +495,14 @@ class FirebaseService {
     try {
       await _firestore.collection('users').doc(userId).update({
         'totalMessagesGenerated': FieldValue.increment(1),
-        'updatedAt': DateTime.now(),
+        'updatedAt': DateTime.now().toIso8601String(),
       });
-    } catch (e) {
-      throw Exception('Failed to update message count: $e');
+    } on FirebaseException catch (e, stackTrace) {
+      LoggerService.warning('Failed to update message count', e, stackTrace);
+      // Don't throw - this is a non-critical operation
+    } catch (e, stackTrace) {
+      LoggerService.warning('Unexpected error updating message count', e, stackTrace);
+      // Don't throw - this is a non-critical operation
     }
   }
 
