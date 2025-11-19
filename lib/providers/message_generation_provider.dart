@@ -1,5 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../services/cloudflare_service.dart';
+import '../services/firebase_ai_service.dart';
 
 // Message generation provider
 final messageGenerationProvider =
@@ -50,7 +50,7 @@ class MessageGenerationState {
 }
 
 class MessageGenerationNotifier extends StateNotifier<MessageGenerationState> {
-  final CloudflareAIService _aiService = CloudflareAIService();
+  final FirebaseAIService _aiService = FirebaseAIService();
 
   MessageGenerationNotifier() : super(MessageGenerationState());
 
@@ -73,14 +73,14 @@ class MessageGenerationNotifier extends StateNotifier<MessageGenerationState> {
   Future<void> generateMessage() async {
     state = state.copyWith(isLoading: true, error: null);
     try {
-      // Check if Cloudflare credentials are configured
-      if (!CloudflareAIService.areCredentialsConfigured()) {
+      // Check if Firebase AI is configured
+      if (!FirebaseAIService.isConfigured()) {
         throw Exception(
-          'Cloudflare AI not configured. ${CloudflareAIService.getConfigurationInstructions()}',
+          'Firebase AI not configured. ${FirebaseAIService.getConfigurationInstructions()}',
         );
       }
 
-      // Call Cloudflare AI Service
+      // Call Firebase AI Service
       final generatedMessage = await _aiService.generateMessage(
         recipient: state.recipient,
         tone: state.tone,

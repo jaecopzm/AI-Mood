@@ -84,5 +84,5 @@ class AppConfig {
 
   // API timeouts
   static const Duration apiTimeout = Duration(seconds: 30);
-  static const Duration cloudflareTimeout = Duration(seconds: 60);
+  static const Duration firebaseAITimeout = Duration(seconds: 60);
 }

@@ -19,7 +19,12 @@ class FirebaseService {
     GoogleSignIn? googleSignIn,
   })  : _auth = auth ?? firebase_auth.FirebaseAuth.instance,
         _firestore = firestore ?? FirebaseFirestore.instance,
-        _googleSignIn = googleSignIn ?? GoogleSignIn();
+        _googleSignIn = googleSignIn ?? GoogleSignIn(
+          scopes: [
+            'email',
+            'https://www.googleapis.com/auth/userinfo.profile',
+          ],
+        );
 
   // Auth Methods
   Future<Result<firebase_auth.UserCredential>> signUp({
@@ -132,6 +137,7 @@ class FirebaseService {
     try {
       LoggerService.info('Attempting Google sign-in');
 
+      // Trigger the Google Sign-In flow
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
 
       if (googleUser == null) {
@@ -140,15 +146,17 @@ class FirebaseService {
         return Result.failure(error);
       }
 
-      final GoogleSignInAuthentication googleAuth =
-          await googleUser.authentication;
+      // Obtain auth details from the request
+      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
 
+      // Create a new credential
       final firebase_auth.AuthCredential credential =
           firebase_auth.GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
+        accessToken: null, // Access token is not required for Firebase auth
         idToken: googleAuth.idToken,
       );
 
+      // Sign in to Firebase with the credential
       final userCredential = await _auth.signInWithCredential(credential);
 
       // Create user document in Firestore if new user
@@ -406,7 +414,7 @@ class FirebaseService {
   }
 
   // Subscription Methods
-  Future<Subscription?> getUserSubscription(String userId) async {
+  Future<Result<Subscription?>> getUserSubscription(String userId) async {
     try {
       final doc = await _firestore
           .collection('subscriptions')
@@ -415,15 +423,21 @@ class FirebaseService {
           .get();
 
       if (doc.docs.isNotEmpty) {
-        return Subscription.fromJson(doc.docs.first.data());
+        final subscription = Subscription.fromJson(doc.docs.first.data());
+        return Result.success(subscription);
       }
-      return null;
-    } catch (e) {
-      throw Exception('Failed to get subscription: $e');
+      return Result.success(null);
+    } catch (e, stackTrace) {
+      LoggerService.error('Failed to get subscription', e, stackTrace);
+      return Result.failure(DatabaseException(
+        'Failed to get subscription',
+        originalError: e,
+        stackTrace: stackTrace,
+      ));
     }
   }
 
-  Future<void> updateSubscription({
+  Future<Result<void>> updateSubscription({
     required String userId,
     required String planType,
   }) async {
@@ -448,13 +462,19 @@ class FirebaseService {
       await _firestore.collection('users').doc(userId).update({
         'subscriptionTier': planType,
       });
-    } catch (e) {
-      throw Exception('Failed to update subscription: $e');
+      return Result.success(null);
+    } catch (e, stackTrace) {
+      LoggerService.error('Failed to update subscription', e, stackTrace);
+      return Result.failure(DatabaseException(
+        'Failed to update subscription',
+        originalError: e,
+        stackTrace: stackTrace,
+      ));
     }
   }
 
   // Usage Tracking Methods
-  Future<void> logUsage({
+  Future<Result<void>> logUsage({
     required String userId,
     required int creditsUsed,
   }) async {
@@ -464,12 +484,18 @@ class FirebaseService {
         'creditsUsed': creditsUsed,
         'date': DateTime.now(),
       });
-    } catch (e) {
-      throw Exception('Failed to log usage: $e');
+      return Result.success(null);
+    } catch (e, stackTrace) {
+      LoggerService.error('Failed to log usage', e, stackTrace);
+      return Result.failure(DatabaseException(
+        'Failed to log usage',
+        originalError: e,
+        stackTrace: stackTrace,
+      ));
     }
   }
 
-  Future<int> getMonthlyCreditUsage(String userId) async {
+  Future<Result<int>> getMonthlyCreditUsage(String userId) async {
     try {
       final now = DateTime.now();
       final startOfMonth = DateTime(now.year, now.month, 1);
@@ -484,9 +510,14 @@ class FirebaseService {
       for (var doc in snapshot.docs) {
         totalUsed += (doc.data()['creditsUsed'] as int?) ?? 0;
       }
-      return totalUsed;
-    } catch (e) {
-      throw Exception('Failed to get credit usage: $e');
+      return Result.success(totalUsed);
+    } catch (e, stackTrace) {
+      LoggerService.error('Failed to get credit usage', e, stackTrace);
+      return Result.failure(DatabaseException(
+        'Failed to get credit usage',
+        originalError: e,
+        stackTrace: stackTrace,
+      ));
     }
   }
 

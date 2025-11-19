@@ -13,14 +13,16 @@ dependencies:
   dio: ^5.3.0
   
   # Firebase packages
-  firebase_core: ^2.24.0
-  firebase_auth: ^4.15.0
-  cloud_firestore: ^4.14.0
-  google_sign_in: ^6.2.0
+  firebase_core: ^4.2.1
+  firebase_auth: ^6.1.2
+  cloud_firestore: ^6.1.0
+  google_sign_in: ^6.2.1
   
   # State Management
-  riverpod: ^2.4.0
-  flutter_riverpod: ^2.4.0
+  riverpod: ^2.6.1
+  flutter_riverpod: ^2.6.1
+
+
   
   # Local storage
   shared_preferences: ^2.2.2
@@ -32,15 +34,16 @@ dependencies:
   freezed_annotation: ^2.4.1
   
   # Utilities
-  intl: ^0.19.0
+  intl: ^0.20.2
   uuid: ^4.0.0
   logger: ^2.0.0
-  flutter_dotenv: ^5.1.0
-  get_it: ^7.6.0
+  flutter_dotenv: ^6.0.0
+  get_it: ^9.0.5
   
   # Clipboard & Sharing
-  share_plus: ^7.2.0
+  share_plus: ^12.0.1
   url_launcher: ^6.2.0
+  firebase_ai: ^3.6.0
 
 dev_dependencies:
   flutter_test:

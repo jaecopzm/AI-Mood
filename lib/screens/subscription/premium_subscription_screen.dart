@@ -656,7 +656,7 @@ class _PremiumSubscriptionScreenState extends State<PremiumSubscriptionScreen>
           ),
           _buildFAQItem(
             'How does the AI work?',
-            'We use advanced AI models from Cloudflare to generate contextual, personalized messages based on your inputs.',
+            'We use advanced AI models from Firebase AI (Gemini) to generate contextual, personalized messages based on your inputs.',
           ),
         ],
       ),

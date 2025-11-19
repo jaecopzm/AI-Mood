@@ -1,6 +1,6 @@
 import 'package:get_it/get_it.dart';
 import '../../services/firebase_service.dart';
-import '../../services/cloudflare_ai_service.dart';
+import '../../services/firebase_ai_service.dart';
 import '../network/dio_client.dart';
 
 /// Service locator instance
@@ -13,7 +13,7 @@ Future<void> setupServiceLocator() async {
 
   // Services - Singleton instances
   getIt.registerLazySingleton<FirebaseService>(() => FirebaseService());
-  getIt.registerLazySingleton<CloudflareAIService>(() => CloudflareAIService());
+  getIt.registerLazySingleton<FirebaseAIService>(() => FirebaseAIService());
 
   // TODO: Add repositories when implemented
   // getIt.registerLazySingleton<UserRepository>(

@@ -1,6 +1,6 @@
 # AI Mood - SaaS Message Generator App
 
-> AI-powered personalized message writer for friends, family, crush, and significant others using Cloudflare AI & Firebase
+> AI-powered personalized message writer for friends, family, crush, and significant others using Firebase AI (Gemini) & Firebase
 
 ## Architecture Overview
 
@@ -18,7 +18,7 @@
          ├────────────────────┤
          │ Firebase Auth      │ (User Authentication)
          │ Firestore Database │ (Data Storage)
-         │ Cloudflare AI      │ (LLM for Messages)
+         │ Firebase AI        │ (Gemini for Messages)
          └────────────────────┘
 ```
 
@@ -28,13 +28,13 @@
 lib/
 ├── config/
 │   ├── app_config.dart          # App settings, subscription tiers, tones, recipients
-│   ├── cloudflare_config.dart   # Cloudflare AI API credentials
+│   ├── firebase_config.dart     # Firebase configurations
 │   └── firebase_config.dart     # Firebase project configuration
 ├── models/
-│   ├── cloudflare_request.dart  # AI request/response models
+│   ├── message_model.dart       # Message data models
 │   └── user_model.dart          # User, Subscription, Message models
 ├── services/
-│   ├── cloudflare_ai_service.dart   # Message generation service
+│   ├── firebase_ai_service.dart     # Message generation service
 │   └── firebase_service.dart        # Auth & database service
 ├── screens/                     # UI screens (to be created)
 └── main.dart                    # App entry point
@@ -55,8 +55,8 @@ Crush, Girlfriend/Boyfriend, Best Friend, Family, Boss, Colleague, Parent, Sibli
 
 ### 4. **Core Services**
 
-#### CloudflareAIService
-Generate personalized messages using Cloudflare's LLM:
+#### FirebaseAIService
+Generate personalized messages using Firebase AI (Gemini):
 - `generateMessage()` - Create single message
 - `generateMessageVariations()` - Create multiple versions
 
@@ -82,12 +82,10 @@ static const String projectId = 'YOUR_PROJECT_ID';
 // ... add other credentials
 ```
 
-### 3. Configure Cloudflare AI
-Update `lib/config/cloudflare_config.dart`:
-```dart
-static const String accountId = 'YOUR_CLOUDFLARE_ACCOUNT_ID';
-static const String apiToken = 'YOUR_CLOUDFLARE_API_TOKEN';
-```
+### 3. Configure Firebase AI
+Firebase AI is automatically configured through your Firebase project setup.
+
+No additional configuration needed - Firebase AI uses your Firebase project credentials.
 
 ### 4. Run the App
 ```bash
@@ -98,9 +96,11 @@ flutter run
 
 ### Generate a Message
 ```dart
-import 'package:ai_mood/services/cloudflare_ai_service.dart';
+import 'package:ai_mood/services/firebase_ai_service.dart';
 
-final message = await CloudflareAIService.generateMessage(
+final firebaseAI = FirebaseAIService();
+await firebaseAI.initialize();
+final message = await firebaseAI.generateMessage(
   recipientType: 'crush',
   tone: 'romantic',
   context: 'express your feelings naturally',
@@ -147,7 +147,7 @@ await firebaseService.signIn(
 | **State Management** | Riverpod |
 | **Auth** | Firebase Authentication |
 | **Database** | Firestore |
-| **AI Engine** | Cloudflare Workers AI |
+| **AI Engine** | Firebase AI (Gemini) |
 | **HTTP Client** | http package |
 | **Storage** | Hive (local caching) |
 
@@ -181,14 +181,14 @@ await firebaseService.signIn(
 }
 ```
 
-## Cloudflare AI Integration
+## Firebase AI Integration
 
-**Endpoint**: `https://api.cloudflare.com/client/v4/accounts/{accountId}/ai/run/@cf/meta/llama-3-8b-instruct`
+**Model**: Firebase AI uses Google's Gemini models for text generation.
 
 **Available Models**:
-- `@cf/meta/llama-3-8b-instruct` (recommended)
-- `@cf/meta/llama-2-7b-chat-int8`
-- `@cf/mistral/mistral-7b-instruct-v0.1`
+- `gemini-2.5-flash` (recommended)
+- `gemini-1.5-pro`
+- `gemini-1.5-flash`
 
 **Request Format**:
 ```json
@@ -241,7 +241,7 @@ See `SETUP_GUIDE.md` for step-by-step setup instructions.
 All services throw descriptive exceptions:
 ```dart
 try {
-  await cloudflareService.generateMessage(...);
+  await firebaseAIService.generateMessage(...);
 } catch (e) {
   print('Error: $e');
   // Handle error
@@ -254,7 +254,7 @@ try {
 |-------|----------|
 | FirebaseAuth import conflict | Already fixed using `firebase_auth as` alias |
 | Missing dependencies | Run `flutter pub get` |
-| Cloudflare 401 error | Verify Account ID and API Token |
+| Firebase AI error | Check Firebase project configuration |
 | Firestore permission denied | Update security rules |
 
 ## Dependencies

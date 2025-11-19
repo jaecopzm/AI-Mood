@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/message_model.dart';
-import '../services/cloudflare_ai_service.dart';
+import '../services/firebase_ai_service.dart';
 import '../services/firebase_service.dart';
 import '../core/di/service_locator.dart';
 import '../core/services/error_handler.dart';
@@ -8,8 +8,8 @@ import '../core/services/logger_service.dart';
 import '../core/validators/input_validators.dart';
 
 // Service providers (using DI)
-final cloudflareServiceProvider = Provider<CloudflareAIService>((ref) {
-  return getIt<CloudflareAIService>();
+final firebaseAIServiceProvider = Provider<FirebaseAIService>((ref) {
+  return getIt<FirebaseAIService>();
 });
 
 final firebaseServiceProvider = Provider<FirebaseService>((ref) {
@@ -19,7 +19,7 @@ final firebaseServiceProvider = Provider<FirebaseService>((ref) {
 // Message provider for handling message generation and history
 final messageProvider = StateNotifierProvider<MessageNotifier, MessageState>((ref) {
   return MessageNotifier(
-    ref.read(cloudflareServiceProvider),
+    ref.read(firebaseAIServiceProvider),
     ref.read(firebaseServiceProvider),
   );
 });
@@ -58,10 +58,10 @@ class MessageState {
 }
 
 class MessageNotifier extends StateNotifier<MessageState> {
-  final CloudflareAIService _cloudflareService;
+  final FirebaseAIService _firebaseAIService;
   final FirebaseService _firebaseService;
 
-  MessageNotifier(this._cloudflareService, this._firebaseService)
+  MessageNotifier(this._firebaseAIService, this._firebaseService)
       : super(MessageState());
 
   Future<void> generateMessages({
@@ -108,7 +108,7 @@ class MessageNotifier extends StateNotifier<MessageState> {
       LoggerService.info('Message: Starting generation for $recipientType');
 
       // Generate message variations
-      final variationsResult = await _cloudflareService.generateMessageVariations(
+      final variationsResult = await _firebaseAIService.generateMessageVariations(
         recipientType: recipientType,
         tone: tone,
         context: context.trim(),
