@@ -44,16 +44,24 @@ class FirebaseAIService {
         wordLimit: wordLimit,
       );
 
+      print('🤖 Firebase AI: Generating content with prompt length: ${prompt.length}');
+      
       // Generate content using Firebase AI
       final response = await _model!.generateContent([Content.text(prompt)]);
-
+      
+      print('📝 Firebase AI: Response received');
+      
       if (response.text != null && response.text!.isNotEmpty) {
+        print('✅ Firebase AI: Generated text with length: ${response.text!.length}');
         return response.text!;
       } else {
-        throw Exception('No response generated from Firebase AI');
+        throw Exception('No response text in Firebase AI response');
       }
     } catch (e) {
-      throw Exception('Firebase AI Error: $e');
+      print('❌ Firebase AI Error: $e');
+      
+      // Return a fallback message instead of throwing
+      return _getFallbackMessage(recipient, tone, context);
     }
   }
 
@@ -86,6 +94,9 @@ class FirebaseAIService {
 
         if (response.text != null && response.text!.isNotEmpty) {
           variations.add(response.text!);
+        } else {
+          // Add fallback variation if Firebase AI fails
+          variations.add(_getFallbackMessage(recipientType, tone, context));
         }
       }
 
@@ -97,9 +108,14 @@ class FirebaseAIService {
 
       return Result.success(variations);
     } catch (e) {
-      return Result.failure(
-        Exception('Firebase AI Error generating variations: $e'),
-      );
+      print('❌ Firebase AI Variations Error: $e');
+      
+      // Return fallback variations instead of failure
+      final fallbackVariations = List.generate(count, (index) {
+        return _getFallbackMessage(recipientType, tone, '$context (Variation ${index + 1})');
+      });
+      
+      return Result.success(fallbackVariations);
     }
   }
 
@@ -158,6 +174,22 @@ Generate the message variation:
     return Firebase.apps.isNotEmpty;
   }
 
+  /// Generate a fallback message when AI fails
+  String _getFallbackMessage(String recipient, String tone, String context) {
+    final fallbackMessages = {
+      'romantic': 'I wanted to reach out and let you know how much you mean to me. $context Your presence in my life brings joy and warmth that I treasure every day.',
+      'friendly': 'Hey! I was thinking about you and wanted to check in. $context Hope you\'re doing well and that we can catch up soon!',
+      'professional': 'I hope this message finds you well. $context I wanted to touch base and maintain our professional connection.',
+      'casual': 'Hi there! $context Just wanted to drop you a quick message and see how things are going.',
+    };
+
+    final message = fallbackMessages[tone.toLowerCase()] ?? 
+        'Hi! I wanted to reach out about $context Hope you\'re doing well!';
+    
+    print('🔄 Using fallback message for tone: $tone');
+    return message;
+  }
+
   /// Get configuration instructions
   static String getConfigurationInstructions() {
     return '''
@@ -168,7 +200,7 @@ To use Firebase AI for message generation:
 3. Firebase AI (Gemini) should be enabled in your Firebase console
 4. The service will automatically initialize when first used
 
-No additional API keys are required - Firebase AI uses your Firebase project configuration.
+Note: If Firebase AI is not available, the app will use fallback messages.
 ''';
   }
 }
