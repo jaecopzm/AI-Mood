@@ -9,6 +9,7 @@ class PremiumButton extends StatefulWidget {
   final IconData? icon;
   final bool isLoading;
   final bool isFullWidth;
+  final bool isIconOnly;
   final EdgeInsets? padding;
 
   const PremiumButton({
@@ -19,6 +20,7 @@ class PremiumButton extends StatefulWidget {
     this.icon,
     this.isLoading = false,
     this.isFullWidth = true,
+    this.isIconOnly = false,
     this.padding,
   });
 
@@ -70,12 +72,16 @@ class _PremiumButtonState extends State<PremiumButton>
         scale: _scaleAnimation,
         child: AnimatedContainer(
           duration: PremiumTheme.animationFast,
-          width: widget.isFullWidth ? double.infinity : null,
+          width: widget.isIconOnly 
+              ? null 
+              : (widget.isFullWidth ? double.infinity : null),
           padding: widget.padding ??
-              const EdgeInsets.symmetric(
-                horizontal: PremiumTheme.spaceLg,
-                vertical: PremiumTheme.spaceMd,
-              ),
+              (widget.isIconOnly 
+                  ? const EdgeInsets.all(PremiumTheme.spaceMd)
+                  : const EdgeInsets.symmetric(
+                      horizontal: PremiumTheme.spaceLg,
+                      vertical: PremiumTheme.spaceMd,
+                    )),
           decoration: BoxDecoration(
             gradient: widget.gradient ?? PremiumTheme.primaryGradient,
             borderRadius: BorderRadius.circular(PremiumTheme.radiusMd),
@@ -97,23 +103,25 @@ class _PremiumButtonState extends State<PremiumButton>
                     ),
                   ),
                 )
-              : Row(
-                  mainAxisSize: MainAxisSize.min,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    if (widget.icon != null) ...[
-                      Icon(widget.icon, color: Colors.white, size: 20),
-                      const SizedBox(width: PremiumTheme.spaceSm),
-                    ],
-                    Text(
-                      widget.text,
-                      style: PremiumTheme.labelLarge.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
+              : widget.isIconOnly
+                    ? Icon(widget.icon, color: Colors.white, size: 24)
+                    : Row(
+                        mainAxisSize: MainAxisSize.min,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          if (widget.icon != null) ...[
+                            Icon(widget.icon, color: Colors.white, size: 20),
+                            const SizedBox(width: PremiumTheme.spaceSm),
+                          ],
+                          Text(
+                            widget.text,
+                            style: PremiumTheme.labelLarge.copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                  ],
-                ),
         ),
       ),
     );

@@ -294,32 +294,35 @@ class _PremiumHomeScreenState extends ConsumerState<PremiumHomeScreen>
           ),
         ),
         child: SafeArea(
-          child: CustomScrollView(
-            slivers: [
-              // App Bar
-              SliverToBoxAdapter(child: _buildAppBar()),
+          child: SafeArea(
+            child: CustomScrollView(
+              physics: const ClampingScrollPhysics(), // Prevent overscroll issues
+              slivers: [
+                // App Bar
+                SliverToBoxAdapter(child: _buildAppBar()),
 
-              // Greeting Section
-              SliverToBoxAdapter(child: _buildGreetingSection(authState)),
+                // Greeting Section
+                SliverToBoxAdapter(child: _buildGreetingSection(authState)),
 
-              // Quick Stats
-              SliverToBoxAdapter(child: _buildQuickStatsCard(messageState)),
+                // Quick Stats
+                SliverToBoxAdapter(child: _buildQuickStatsCard(messageState)),
 
-              // Quick Actions
-              SliverToBoxAdapter(child: _buildQuickActions()),
+                // Quick Actions
+                SliverToBoxAdapter(child: _buildQuickActions()),
 
-              // Main Content
-              SliverToBoxAdapter(child: _buildMainContent()),
+                // Main Content
+                SliverToBoxAdapter(child: _buildMainContent()),
 
-              // Generated Messages
-              if (_generatedMessages.isNotEmpty)
-                SliverToBoxAdapter(child: _buildGeneratedMessages()),
+                // Generated Messages
+                if (_generatedMessages.isNotEmpty)
+                  SliverToBoxAdapter(child: _buildGeneratedMessages()),
 
-              // Bottom Spacing
-              const SliverToBoxAdapter(
-                child: SizedBox(height: PremiumTheme.space3xl),
-              ),
-            ],
+                // Bottom Spacing
+                const SliverToBoxAdapter(
+                  child: SizedBox(height: PremiumTheme.space3xl),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -787,6 +790,7 @@ class _PremiumHomeScreenState extends ConsumerState<PremiumHomeScreen>
         padding: const EdgeInsets.all(PremiumTheme.spaceLg),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min, // Prevent infinite height
           children: [
             Row(
               children: [

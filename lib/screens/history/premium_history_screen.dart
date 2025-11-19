@@ -65,7 +65,8 @@ class _PremiumHistoryScreenState extends ConsumerState<PremiumHistoryScreen> {
   }
 
   // Mock data kept for fallback if needed
-  final List<Map<String, dynamic>> _unusedMockMessages = [
+  // Mock messages for demonstration (remove in production)
+  static const List<Map<String, dynamic>> _mockMessages = [
     {
       'text': 'Hey love, just wanted to say you make every moment brighter. Can\'t wait to see you tonight! 💕',
       'recipient': 'Crush',
