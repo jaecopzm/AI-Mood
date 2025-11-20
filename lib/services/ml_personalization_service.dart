@@ -65,8 +65,9 @@ class MLPersonalizationService {
 
       // Generate suggestions based on patterns
       for (final pattern in patterns) {
-        if (recipientType != null && pattern.recipientType != recipientType)
+        if (recipientType != null && pattern.recipientType != recipientType) {
           continue;
+        }
 
         final suggestion = PersonalizedSuggestion(
           recipientType: pattern.recipientType,

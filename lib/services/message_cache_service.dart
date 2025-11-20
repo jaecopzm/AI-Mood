@@ -86,7 +86,7 @@ class MessageCacheService {
     required String preferredStyle,
   }) async {
     try {
-      final key = '${recipientType}_${tone}';
+      final key = '${recipientType}_$tone';
       await _userPreferencesBox?.put(key, preferredStyle);
       LoggerService.debug('👤 Stored user preference: $key -> $preferredStyle');
     } catch (e) {
@@ -97,7 +97,7 @@ class MessageCacheService {
   /// Get user preferred style for recipient/tone combination
   String? getUserPreference(String recipientType, String tone) {
     try {
-      final key = '${recipientType}_${tone}';
+      final key = '${recipientType}_$tone';
       return _userPreferencesBox?.get(key);
     } catch (e) {
       LoggerService.error('Failed to get user preference', e);

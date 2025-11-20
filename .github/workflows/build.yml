@@ -1,5 +1,8 @@
 name: Flutter Build CI
 
+permissions:
+  contents: write
+
 on:
   push:
     branches: [ main, develop ]
@@ -24,7 +27,6 @@ jobs:
 
       - name: Get dependencies
         run: flutter pub get
-
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
@@ -60,11 +62,10 @@ jobs:
       - name: Build APK (Release)
         run: flutter build apk --release --no-pub
 
-      # NEW: Modern release + upload in one step
       - name: Create GitHub Release & Upload APK
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v${{ github.run_number }}
+          tag_name: build-${{ github.run_id }}
           name: Release ${{ github.run_number }}
           body: |
             Automated release build from CI/CD

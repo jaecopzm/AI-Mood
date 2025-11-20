@@ -11,6 +11,7 @@
 /// - pro_annual: $47.99/year
 /// - premium_monthly: $9.99/month
 /// - premium_annual: $95.99/year
+library;
 
 class RevenueCatConfig {
   // TODO: Replace with your actual RevenueCat API keys

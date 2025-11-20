@@ -3,7 +3,6 @@ import 'package:hive_flutter/hive_flutter.dart';
 import '../models/message_model.dart';
 import '../core/services/logger_service.dart';
 import '../core/utils/result.dart';
-import 'dart:math' as math;
 
 /// Enhanced service for managing user messages with search, filtering, and favorites
 class MessageManagementService {

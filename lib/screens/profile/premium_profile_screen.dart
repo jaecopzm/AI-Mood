@@ -44,6 +44,17 @@ class _PremiumProfileScreenState extends ConsumerState<PremiumProfileScreen> {
     final messageState = ref.watch(enhancedMessageProvider);
     final subscriptionState = ref.watch(subscriptionProvider);
 
+    // Initialize subscription if user is authenticated and not initialized
+    if (authState.isAuthenticated && authState.user != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!subscriptionState.isLoading && subscriptionState.usage == null) {
+          ref
+              .read(subscriptionProvider.notifier)
+              .initialize(authState.user!.uid);
+        }
+      });
+    }
+
     return Scaffold(
       body: Container(
         decoration: BoxDecoration(
@@ -198,7 +209,7 @@ class _PremiumProfileScreenState extends ConsumerState<PremiumProfileScreen> {
         children: [
           Expanded(
             child: _buildStatCard(
-              '${messageState.history.length}',
+              '${messageState.variations.length}',
               'Messages',
               Icons.message,
               PremiumTheme.primaryGradient,
@@ -207,8 +218,8 @@ class _PremiumProfileScreenState extends ConsumerState<PremiumProfileScreen> {
           const SizedBox(width: PremiumTheme.spaceMd),
           Expanded(
             child: _buildStatCard(
-              '${messageState.history.where((m) => m.isSaved).length}',
-              'Saved',
+              messageState.currentMessage != null ? '1' : '0',
+              'Current',
               Icons.bookmark,
               PremiumTheme.secondaryGradient,
             ),

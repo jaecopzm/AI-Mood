@@ -9,6 +9,7 @@ import 'screens/auth/premium_signin_screen.dart';
 import 'screens/auth/signup_screen.dart';
 import 'screens/app_initializer.dart';
 import 'screens/onboarding/onboarding_screen.dart';
+import 'services/firebase_service.dart';
 import 'core/config/env_config.dart';
 import 'core/di/service_locator.dart';
 import 'core/services/logger_service.dart';
@@ -96,29 +97,41 @@ class _MainAppState extends State<MainApp> {
   bool _isAuthenticated = false;
   bool _isSignUp = false;
   bool _showOnboarding = false;
-  bool _isCheckingOnboarding = true;
+  bool _isCheckingStatus = true;
   ThemeMode _themeMode = ThemeMode.light;
 
   @override
   void initState() {
     super.initState();
-    _checkOnboardingStatus();
+    _checkAppStatus();
   }
 
-  Future<void> _checkOnboardingStatus() async {
+  Future<void> _checkAppStatus() async {
     try {
+      // Check onboarding status
       final prefs = await SharedPreferences.getInstance();
       final hasCompletedOnboarding =
           prefs.getBool('onboarding_complete') ?? false;
 
+      // Check authentication status using Firebase
+      final user = getIt<FirebaseService>().currentFirebaseUser;
+      final isAuthenticated = user != null;
+
+      LoggerService.info(
+        'App status check: onboarding=$hasCompletedOnboarding, auth=$isAuthenticated',
+      );
+
       setState(() {
         _showOnboarding = !hasCompletedOnboarding;
-        _isCheckingOnboarding = false;
+        _isAuthenticated = isAuthenticated;
+        _isCheckingStatus = false;
       });
     } catch (e) {
+      LoggerService.error('Failed to check app status', e);
       setState(() {
         _showOnboarding = true; // Show onboarding if check fails
-        _isCheckingOnboarding = false;
+        _isAuthenticated = false;
+        _isCheckingStatus = false;
       });
     }
   }
@@ -144,8 +157,8 @@ class _MainAppState extends State<MainApp> {
 
   @override
   Widget build(BuildContext context) {
-    // Show loading while checking onboarding status
-    if (_isCheckingOnboarding) {
+    // Show loading while checking app status
+    if (_isCheckingStatus) {
       return MaterialApp(
         debugShowCheckedModeBanner: false,
         home: Scaffold(

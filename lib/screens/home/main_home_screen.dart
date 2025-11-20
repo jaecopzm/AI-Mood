@@ -50,11 +50,19 @@ class _MainHomeScreenState extends ConsumerState<MainHomeScreen>
     _initializeVoiceService();
     _analytics = getIt<AnalyticsService>();
 
-    // Track screen view
+    // Track screen view and initialize subscription
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final authState = ref.read(authStateProvider);
       if (authState.user != null) {
         _analytics.trackScreenView(authState.user!.uid, 'home');
+
+        // Initialize subscription if not already initialized
+        final subscriptionState = ref.read(subscriptionProvider);
+        if (subscriptionState.usage == null) {
+          ref
+              .read(subscriptionProvider.notifier)
+              .initialize(authState.user!.uid);
+        }
       }
     });
   }
@@ -790,7 +798,23 @@ class _MainHomeScreenState extends ConsumerState<MainHomeScreen>
         ),
       );
 
-      if (result != true) return;
+      // User dismissed paywall without subscribing
+      if (result != true) {
+        LoggerService.info('User dismissed paywall without subscribing');
+        return;
+      }
+
+      // Re-check if user can generate after potential subscription
+      final canGenerateAfterPaywall = await ref
+          .read(subscriptionProvider.notifier)
+          .canGenerateMessage(userId);
+
+      if (!canGenerateAfterPaywall) {
+        LoggerService.warning(
+          'User still cannot generate message after paywall',
+        );
+        return;
+      }
     }
 
     // Increment usage

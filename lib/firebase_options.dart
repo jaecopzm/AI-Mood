@@ -70,8 +70,10 @@ class DefaultFirebaseOptions {
     messagingSenderId: '1053580752418',
     projectId: 'ai-mood-2d7d0',
     storageBucket: 'ai-mood-2d7d0.firebasestorage.app',
-    androidClientId: '1053580752418-vdggjepn4tv5chtnchaiss6ckmjgd8f1.apps.googleusercontent.com',
-    iosClientId: '1053580752418-m6e1rta8a06p94sld2geedpvjb13vgdd.apps.googleusercontent.com',
+    androidClientId:
+        '1053580752418-vdggjepn4tv5chtnchaiss6ckmjgd8f1.apps.googleusercontent.com',
+    iosClientId:
+        '1053580752418-m6e1rta8a06p94sld2geedpvjb13vgdd.apps.googleusercontent.com',
     iosBundleId: 'com.example.aiMood',
   );
 }

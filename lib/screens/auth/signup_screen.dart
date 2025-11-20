@@ -528,19 +528,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen>
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Container(
-              width: 24,
-              height: 24,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: const Icon(
-                Icons.g_mobiledata,
-                size: 24,
-                color: Colors.blue,
-              ),
-            ),
+            Image.asset('assets/icons/google.png', width: 24, height: 24),
             const SizedBox(width: PremiumTheme.spaceMd),
             Text(
               'Continue with Google',

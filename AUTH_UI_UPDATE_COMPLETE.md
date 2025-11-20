@@ -5,6 +5,7 @@
 ### 1. UI/UX Consistency
 ✅ Sign-up screen now matches sign-in screen design
 ✅ Same gradient background (primary → secondary → accent)
+
 ✅ Same white card with rounded corners
 ✅ Same header with diamond icon and app name
 ✅ Consistent animations (fade + slide)

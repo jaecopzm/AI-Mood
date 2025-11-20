@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:ui';
 import '../config/premium_theme.dart';
 import 'home/main_home_screen.dart';
 import 'history/premium_history_screen.dart';
@@ -13,10 +14,11 @@ class PremiumMainScreen extends StatefulWidget {
 }
 
 class _PremiumMainScreenState extends State<PremiumMainScreen>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   int _currentIndex = 0;
   late PageController _pageController;
-  late AnimationController _fabAnimationController;
+  late AnimationController _navAnimationController;
+  late List<AnimationController> _iconAnimationControllers;
 
   final List<Widget> _screens = const [
     MainHomeScreen(),
@@ -28,23 +30,27 @@ class _PremiumMainScreenState extends State<PremiumMainScreen>
   final List<_NavItem> _navItems = [
     _NavItem(
       icon: Icons.home_rounded,
+      activeIcon: Icons.home,
       label: 'Home',
-      gradient: PremiumTheme.primaryGradient,
+      color: Color(0xFF6366F1),
     ),
     _NavItem(
       icon: Icons.history_rounded,
+      activeIcon: Icons.history,
       label: 'History',
-      gradient: PremiumTheme.accentGradient,
+      color: Color(0xFF8B5CF6),
     ),
     _NavItem(
-      icon: Icons.diamond_rounded,
+      icon: Icons.diamond_outlined,
+      activeIcon: Icons.diamond,
       label: 'Premium',
-      gradient: PremiumTheme.goldGradient,
+      color: Color(0xFFF59E0B),
     ),
     _NavItem(
-      icon: Icons.person_rounded,
+      icon: Icons.person_outline_rounded,
+      activeIcon: Icons.person_rounded,
       label: 'Profile',
-      gradient: PremiumTheme.secondaryGradient,
+      color: Color(0xFFEC4899),
     ),
   ];
 
@@ -52,25 +58,43 @@ class _PremiumMainScreenState extends State<PremiumMainScreen>
   void initState() {
     super.initState();
     _pageController = PageController();
-    _fabAnimationController = AnimationController(
+    _navAnimationController = AnimationController(
       vsync: this,
-      duration: PremiumTheme.animationNormal,
+      duration: const Duration(milliseconds: 300),
     );
+    _iconAnimationControllers = List.generate(
+      _navItems.length,
+      (index) => AnimationController(
+        vsync: this,
+        duration: const Duration(milliseconds: 200),
+      ),
+    );
+    _iconAnimationControllers[0].forward();
   }
 
   @override
   void dispose() {
     _pageController.dispose();
-    _fabAnimationController.dispose();
+    _navAnimationController.dispose();
+    for (var controller in _iconAnimationControllers) {
+      controller.dispose();
+    }
     super.dispose();
   }
 
   void _onNavTap(int index) {
-    setState(() => _currentIndex = index);
+    if (_currentIndex == index) return;
+
+    setState(() {
+      _iconAnimationControllers[_currentIndex].reverse();
+      _currentIndex = index;
+      _iconAnimationControllers[index].forward();
+    });
+
     _pageController.animateToPage(
       index,
-      duration: PremiumTheme.animationNormal,
-      curve: Curves.easeInOut,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOutCubic,
     );
   }
 
@@ -78,60 +102,64 @@ class _PremiumMainScreenState extends State<PremiumMainScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       extendBody: true,
+      backgroundColor: PremiumTheme.background,
       body: PageView(
         controller: _pageController,
-        onPageChanged: (index) => setState(() => _currentIndex = index),
+        onPageChanged: (index) {
+          setState(() {
+            _iconAnimationControllers[_currentIndex].reverse();
+            _currentIndex = index;
+            _iconAnimationControllers[index].forward();
+          });
+        },
         children: _screens,
       ),
-      bottomNavigationBar: _buildBottomNavBar(),
-      floatingActionButton: _currentIndex == 0 ? _buildFAB() : null,
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      bottomNavigationBar: _buildModernNavBar(),
     );
   }
 
-  Widget _buildBottomNavBar() {
+  Widget _buildModernNavBar() {
     return Container(
-      margin: const EdgeInsets.all(PremiumTheme.spaceMd),
+      margin: const EdgeInsets.only(left: 20, right: 20, bottom: 20),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(PremiumTheme.radiusXl),
+        borderRadius: BorderRadius.circular(30),
         boxShadow: [
-          PremiumTheme.shadow2xl,
           BoxShadow(
-            color: PremiumTheme.primary.withValues(alpha: 0.1),
+            color: Colors.black.withValues(alpha: 0.1),
             blurRadius: 30,
             offset: const Offset(0, 10),
+          ),
+          BoxShadow(
+            color: _navItems[_currentIndex].color.withValues(alpha: 0.2),
+            blurRadius: 20,
+            offset: const Offset(0, 5),
           ),
         ],
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(PremiumTheme.radiusXl),
-        child: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                PremiumTheme.surface,
-                PremiumTheme.surface.withValues(alpha: 0.95),
-              ],
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-            ),
-            border: Border.all(
-              color: PremiumTheme.border.withValues(alpha: 0.5),
-              width: 1,
-            ),
-            borderRadius: BorderRadius.circular(PremiumTheme.radiusXl),
-          ),
-          child: SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: PremiumTheme.spaceSm,
-                vertical: PremiumTheme.spaceXs,
+        borderRadius: BorderRadius.circular(30),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.95),
+              borderRadius: BorderRadius.circular(30),
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.2),
+                width: 1.5,
               ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: List.generate(_navItems.length, (index) {
-                  return _buildNavItem(index);
-                }),
+            ),
+            child: SafeArea(
+              minimum: const EdgeInsets.only(bottom: 4),
+              child: Container(
+                height: 65,
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: List.generate(_navItems.length, (index) {
+                    return _buildNavItem(index);
+                  }),
+                ),
               ),
             ),
           ),
@@ -144,246 +172,55 @@ class _PremiumMainScreenState extends State<PremiumMainScreen>
     final item = _navItems[index];
     final isSelected = _currentIndex == index;
 
-    return GestureDetector(
-      onTap: () => _onNavTap(index),
-      child: AnimatedContainer(
-        duration: PremiumTheme.animationNormal,
-        curve: Curves.easeInOut,
-        padding: EdgeInsets.symmetric(
-          horizontal: isSelected ? PremiumTheme.spaceMd : PremiumTheme.spaceSm,
-          vertical: PremiumTheme.spaceSm,
-        ),
-        decoration: BoxDecoration(
-          gradient: isSelected ? item.gradient : null,
-          borderRadius: BorderRadius.circular(PremiumTheme.radiusLg),
-          boxShadow: isSelected
-              ? [
-                  BoxShadow(
-                    color: _getGradientColor(item.gradient).withValues(alpha: 0.3),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
-                  ),
-                ]
-              : [],
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              item.icon,
-              color: isSelected ? Colors.white : PremiumTheme.textTertiary,
-              size: 24,
-            ),
-            if (isSelected) ...[
-              const SizedBox(width: PremiumTheme.spaceXs),
-              Text(
-                item.label,
-                style: PremiumTheme.labelMedium.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildFAB() {
-    return TweenAnimationBuilder<double>(
-      duration: const Duration(milliseconds: 500),
-      tween: Tween(begin: 0.0, end: 1.0),
-      builder: (context, value, child) {
-        return Transform.scale(
-          scale: value,
-          child: Transform.rotate(
-            angle: value * 2 * 3.14159,
-            child: child,
-          ),
-        );
-      },
-      child: Container(
-        width: 64,
-        height: 64,
-        decoration: BoxDecoration(
-          gradient: PremiumTheme.premiumGradient,
-          shape: BoxShape.circle,
-          boxShadow: [
-            BoxShadow(
-              color: PremiumTheme.primary.withValues(alpha: 0.4),
-              blurRadius: 20,
-              spreadRadius: 2,
-              offset: const Offset(0, 8),
-            ),
-            PremiumTheme.shadow2xl,
-          ],
-        ),
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: _showQuickActions,
-            customBorder: const CircleBorder(),
-            child: const Icon(
-              Icons.auto_awesome,
-              color: Colors.white,
-              size: 28,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Color _getGradientColor(Gradient gradient) {
-    if (gradient == PremiumTheme.primaryGradient) return PremiumTheme.primary;
-    if (gradient == PremiumTheme.secondaryGradient) return PremiumTheme.secondary;
-    if (gradient == PremiumTheme.accentGradient) return PremiumTheme.accent;
-    if (gradient == PremiumTheme.goldGradient) return PremiumTheme.gold;
-    return PremiumTheme.primary;
-  }
-
-  void _showQuickActions() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (context) => Container(
-        decoration: BoxDecoration(
-          color: PremiumTheme.surface,
-          borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(PremiumTheme.radiusXl),
-            topRight: Radius.circular(PremiumTheme.radiusXl),
-          ),
-        ),
-        child: SafeArea(
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => _onNavTap(index),
+        behavior: HitTestBehavior.opaque,
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 4),
           child: Column(
             mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const SizedBox(height: PremiumTheme.spaceSm),
-              Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: PremiumTheme.border,
-                  borderRadius: BorderRadius.circular(PremiumTheme.radiusFull),
-                ),
-              ),
-              const SizedBox(height: PremiumTheme.spaceLg),
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: PremiumTheme.spaceLg,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    ShaderMask(
-                      shaderCallback: (bounds) =>
-                          PremiumTheme.premiumGradient.createShader(bounds),
-                      child: const Text(
-                        'Quick Actions',
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
+              AnimatedBuilder(
+                animation: _iconAnimationControllers[index],
+                builder: (context, child) {
+                  final animation = _iconAnimationControllers[index];
+                  return Transform.scale(
+                    scale: 1.0 + (animation.value * 0.15),
+                    child: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? item.color.withValues(alpha: 0.15)
+                            : Colors.transparent,
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: Icon(
+                        isSelected ? item.activeIcon : item.icon,
+                        color: isSelected ? item.color : Colors.grey.shade400,
+                        size: 24,
                       ),
                     ),
-                    const SizedBox(height: PremiumTheme.spaceLg),
-                    _buildQuickActionItem(
-                      Icons.favorite,
-                      'Love Message',
-                      'Send a romantic message',
-                      PremiumTheme.secondaryGradient,
-                    ),
-                    _buildQuickActionItem(
-                      Icons.business,
-                      'Professional',
-                      'Write a work email',
-                      PremiumTheme.oceanGradient,
-                    ),
-                    _buildQuickActionItem(
-                      Icons.celebration,
-                      'Congratulations',
-                      'Celebrate a success',
-                      PremiumTheme.goldGradient,
-                    ),
-                    _buildQuickActionItem(
-                      Icons.psychology,
-                      'Apology',
-                      'Make amends',
-                      PremiumTheme.accentGradient,
-                    ),
-                    const SizedBox(height: PremiumTheme.spaceLg),
-                  ],
+                  );
+                },
+              ),
+              const SizedBox(height: 2),
+              AnimatedDefaultTextStyle(
+                duration: const Duration(milliseconds: 200),
+                style: TextStyle(
+                  fontSize: isSelected ? 11 : 10,
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                  color: isSelected ? item.color : Colors.grey.shade500,
+                  height: 1.0,
+                ),
+                child: Text(
+                  item.label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildQuickActionItem(
-    IconData icon,
-    String title,
-    String subtitle,
-    Gradient gradient,
-  ) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: PremiumTheme.spaceSm),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () {
-            Navigator.pop(context);
-            // Handle quick action
-          },
-          borderRadius: BorderRadius.circular(PremiumTheme.radiusLg),
-          child: Container(
-            padding: const EdgeInsets.all(PremiumTheme.spaceMd),
-            decoration: BoxDecoration(
-              color: PremiumTheme.surfaceVariant,
-              borderRadius: BorderRadius.circular(PremiumTheme.radiusLg),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(PremiumTheme.spaceSm),
-                  decoration: BoxDecoration(
-                    gradient: gradient,
-                    borderRadius: BorderRadius.circular(PremiumTheme.radiusMd),
-                  ),
-                  child: Icon(icon, color: Colors.white, size: 24),
-                ),
-                const SizedBox(width: PremiumTheme.spaceMd),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        style: PremiumTheme.titleMedium.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      Text(
-                        subtitle,
-                        style: PremiumTheme.bodySmall.copyWith(
-                          color: PremiumTheme.textSecondary,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const Icon(
-                  Icons.arrow_forward_ios,
-                  size: 16,
-                  color: PremiumTheme.textTertiary,
-                ),
-              ],
-            ),
           ),
         ),
       ),
@@ -393,12 +230,14 @@ class _PremiumMainScreenState extends State<PremiumMainScreen>
 
 class _NavItem {
   final IconData icon;
+  final IconData activeIcon;
   final String label;
-  final Gradient gradient;
+  final Color color;
 
   const _NavItem({
     required this.icon,
+    required this.activeIcon,
     required this.label,
-    required this.gradient,
+    required this.color,
   });
 }

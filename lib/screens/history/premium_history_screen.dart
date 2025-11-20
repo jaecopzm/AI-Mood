@@ -64,10 +64,12 @@ class _PremiumHistoryScreenState extends ConsumerState<PremiumHistoryScreen> {
   String _formatDate(DateTime date) {
     final now = DateTime.now();
     final diff = now.difference(date);
-    if (diff.inDays == 0)
+    if (diff.inDays == 0) {
       return 'Today, ${date.hour}:${date.minute.toString().padLeft(2, '0')}';
-    if (diff.inDays == 1)
+    }
+    if (diff.inDays == 1) {
       return 'Yesterday, ${date.hour}:${date.minute.toString().padLeft(2, '0')}';
+    }
     return '${date.month}/${date.day}, ${date.hour}:${date.minute.toString().padLeft(2, '0')}';
   }
 

@@ -151,12 +151,13 @@ class _PremiumSignInScreenState extends ConsumerState<PremiumSignInScreen>
               padding: const EdgeInsets.all(PremiumTheme.spaceLg),
               child: Column(
                 children: [
-                  const SizedBox(height: PremiumTheme.space2xl),
+                  const SizedBox(height: PremiumTheme.spaceLg),
                   _buildHeader(),
-                  const SizedBox(height: PremiumTheme.space3xl),
+                  const SizedBox(height: PremiumTheme.spaceLg),
                   _buildSignInForm(),
                   const SizedBox(height: PremiumTheme.spaceLg),
                   _buildSignUpPrompt(),
+                  const SizedBox(height: PremiumTheme.spaceLg),
                 ],
               ),
             ),
@@ -395,19 +396,7 @@ class _PremiumSignInScreenState extends ConsumerState<PremiumSignInScreen>
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Container(
-              width: 24,
-              height: 24,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: const Icon(
-                Icons.g_mobiledata,
-                size: 24,
-                color: Colors.blue,
-              ),
-            ),
+            Image.asset('assets/icons/google.png', width: 24, height: 24),
             const SizedBox(width: PremiumTheme.spaceMd),
             Text(
               'Continue with Google',

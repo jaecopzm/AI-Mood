@@ -2,7 +2,7 @@
 class FirebaseConfig {
   // Firebase Web Configuration
   // Replace with your Firebase project credentials
-  static const String apiKey = 'YOUR_FIREBASE_API_KEY';
+  static const String apiKey = 'AIzaSyB7iCXkC6beXO2brGockP_TzyeaAk56r-o';
   static const String authDomain = 'YOUR_PROJECT_ID.firebaseapp.com';
   static const String projectId = 'YOUR_PROJECT_ID';
   static const String storageBucket = 'YOUR_PROJECT_ID.appspot.com';
