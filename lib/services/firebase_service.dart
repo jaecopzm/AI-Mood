@@ -17,14 +17,16 @@ class FirebaseService {
     firebase_auth.FirebaseAuth? auth,
     FirebaseFirestore? firestore,
     GoogleSignIn? googleSignIn,
-  })  : _auth = auth ?? firebase_auth.FirebaseAuth.instance,
-        _firestore = firestore ?? FirebaseFirestore.instance,
-        _googleSignIn = googleSignIn ?? GoogleSignIn(
-          scopes: [
-            'email',
-            'https://www.googleapis.com/auth/userinfo.profile',
-          ],
-        );
+  }) : _auth = auth ?? firebase_auth.FirebaseAuth.instance,
+       _firestore = firestore ?? FirebaseFirestore.instance,
+       _googleSignIn =
+           googleSignIn ??
+           GoogleSignIn(
+             scopes: [
+               'email',
+               'https://www.googleapis.com/auth/userinfo.profile',
+             ],
+           );
 
   // Auth Methods
   Future<Result<firebase_auth.UserCredential>> signUp({
@@ -43,10 +45,16 @@ class FirebaseService {
       // Update display name
       await userCredential.user?.updateDisplayName(displayName);
 
+      // Send email verification
+      await userCredential.user?.sendEmailVerification();
+      LoggerService.info('📧 Verification email sent to: $email');
+
       // Create user document in Firestore
       if (userCredential.user != null) {
         await _createUserDocument(userCredential.user!);
-        LoggerService.info('User signed up successfully: ${userCredential.user!.uid}');
+        LoggerService.info(
+          'User signed up successfully: ${userCredential.user!.uid}',
+        );
       }
 
       return Result.success(userCredential);
@@ -77,7 +85,9 @@ class FirebaseService {
         password: password,
       );
 
-      LoggerService.info('User signed in successfully: ${userCredential.user?.uid}');
+      LoggerService.info(
+        'User signed in successfully: ${userCredential.user?.uid}',
+      );
       return Result.success(userCredential);
     } on firebase_auth.FirebaseAuthException catch (e, stackTrace) {
       final error = ErrorHandler.convertFirebaseException(e);
@@ -128,7 +138,11 @@ class FirebaseService {
         originalError: e,
         stackTrace: stackTrace,
       );
-      LoggerService.error('Unexpected error during password reset', e, stackTrace);
+      LoggerService.error(
+        'Unexpected error during password reset',
+        e,
+        stackTrace,
+      );
       return Result.failure(error);
     }
   }
@@ -147,14 +161,15 @@ class FirebaseService {
       }
 
       // Obtain auth details from the request
-      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+      final GoogleSignInAuthentication googleAuth =
+          await googleUser.authentication;
 
       // Create a new credential
       final firebase_auth.AuthCredential credential =
           firebase_auth.GoogleAuthProvider.credential(
-        accessToken: null, // Access token is not required for Firebase auth
-        idToken: googleAuth.idToken,
-      );
+            accessToken: null, // Access token is not required for Firebase auth
+            idToken: googleAuth.idToken,
+          );
 
       // Sign in to Firebase with the credential
       final userCredential = await _auth.signInWithCredential(credential);
@@ -162,7 +177,9 @@ class FirebaseService {
       // Create user document in Firestore if new user
       if (userCredential.user != null) {
         await _createUserDocument(userCredential.user!);
-        LoggerService.info('Google sign-in successful: ${userCredential.user!.uid}');
+        LoggerService.info(
+          'Google sign-in successful: ${userCredential.user!.uid}',
+        );
       }
 
       return Result.success(userCredential);
@@ -176,7 +193,11 @@ class FirebaseService {
         originalError: e,
         stackTrace: stackTrace,
       );
-      LoggerService.error('Unexpected error during Google sign-in', e, stackTrace);
+      LoggerService.error(
+        'Unexpected error during Google sign-in',
+        e,
+        stackTrace,
+      );
       return Result.failure(error);
     }
   }
@@ -191,7 +212,9 @@ class FirebaseService {
           .get();
 
       if (doc.exists) {
-        LoggerService.info('User document already exists for: ${firebaseUser.uid}');
+        LoggerService.info(
+          'User document already exists for: ${firebaseUser.uid}',
+        );
         return;
       }
 
@@ -220,7 +243,11 @@ class FirebaseService {
         stackTrace: stackTrace,
       );
     } catch (e, stackTrace) {
-      LoggerService.error('Unexpected error creating user document', e, stackTrace);
+      LoggerService.error(
+        'Unexpected error creating user document',
+        e,
+        stackTrace,
+      );
       throw DatabaseException(
         'Failed to create user profile',
         originalError: e,
@@ -249,18 +276,26 @@ class FirebaseService {
       return Result.failure(NotFoundException('User profile not found'));
     } on FirebaseException catch (e, stackTrace) {
       LoggerService.error('Failed to get current user', e, stackTrace);
-      return Result.failure(DatabaseException(
-        'Failed to retrieve user profile',
-        originalError: e,
-        stackTrace: stackTrace,
-      ));
+      return Result.failure(
+        DatabaseException(
+          'Failed to retrieve user profile',
+          originalError: e,
+          stackTrace: stackTrace,
+        ),
+      );
     } catch (e, stackTrace) {
-      LoggerService.error('Unexpected error getting current user', e, stackTrace);
-      return Result.failure(DatabaseException(
-        'Failed to retrieve user profile',
-        originalError: e,
-        stackTrace: stackTrace,
-      ));
+      LoggerService.error(
+        'Unexpected error getting current user',
+        e,
+        stackTrace,
+      );
+      return Result.failure(
+        DatabaseException(
+          'Failed to retrieve user profile',
+          originalError: e,
+          stackTrace: stackTrace,
+        ),
+      );
     }
   }
 
@@ -276,18 +311,22 @@ class FirebaseService {
       return Result.failure(NotFoundException('User not found'));
     } on FirebaseException catch (e, stackTrace) {
       LoggerService.error('Failed to get user by ID', e, stackTrace);
-      return Result.failure(DatabaseException(
-        'Failed to retrieve user',
-        originalError: e,
-        stackTrace: stackTrace,
-      ));
+      return Result.failure(
+        DatabaseException(
+          'Failed to retrieve user',
+          originalError: e,
+          stackTrace: stackTrace,
+        ),
+      );
     } catch (e, stackTrace) {
       LoggerService.error('Unexpected error getting user by ID', e, stackTrace);
-      return Result.failure(DatabaseException(
-        'Failed to retrieve user',
-        originalError: e,
-        stackTrace: stackTrace,
-      ));
+      return Result.failure(
+        DatabaseException(
+          'Failed to retrieve user',
+          originalError: e,
+          stackTrace: stackTrace,
+        ),
+      );
     }
   }
 
@@ -308,18 +347,22 @@ class FirebaseService {
       return Result.success(null);
     } on FirebaseException catch (e, stackTrace) {
       LoggerService.error('Failed to save message', e, stackTrace);
-      return Result.failure(DatabaseException(
-        'Failed to save message',
-        originalError: e,
-        stackTrace: stackTrace,
-      ));
+      return Result.failure(
+        DatabaseException(
+          'Failed to save message',
+          originalError: e,
+          stackTrace: stackTrace,
+        ),
+      );
     } catch (e, stackTrace) {
       LoggerService.error('Unexpected error saving message', e, stackTrace);
-      return Result.failure(DatabaseException(
-        'Failed to save message',
-        originalError: e,
-        stackTrace: stackTrace,
-      ));
+      return Result.failure(
+        DatabaseException(
+          'Failed to save message',
+          originalError: e,
+          stackTrace: stackTrace,
+        ),
+      );
     }
   }
 
@@ -345,18 +388,26 @@ class FirebaseService {
       return Result.success(messages);
     } on FirebaseException catch (e, stackTrace) {
       LoggerService.error('Failed to get user messages', e, stackTrace);
-      return Result.failure(DatabaseException(
-        'Failed to retrieve messages',
-        originalError: e,
-        stackTrace: stackTrace,
-      ));
+      return Result.failure(
+        DatabaseException(
+          'Failed to retrieve messages',
+          originalError: e,
+          stackTrace: stackTrace,
+        ),
+      );
     } catch (e, stackTrace) {
-      LoggerService.error('Unexpected error getting user messages', e, stackTrace);
-      return Result.failure(DatabaseException(
-        'Failed to retrieve messages',
-        originalError: e,
-        stackTrace: stackTrace,
-      ));
+      LoggerService.error(
+        'Unexpected error getting user messages',
+        e,
+        stackTrace,
+      );
+      return Result.failure(
+        DatabaseException(
+          'Failed to retrieve messages',
+          originalError: e,
+          stackTrace: stackTrace,
+        ),
+      );
     }
   }
 
@@ -373,18 +424,22 @@ class FirebaseService {
       return Result.success(null);
     } on FirebaseException catch (e, stackTrace) {
       LoggerService.error('Failed to update message', e, stackTrace);
-      return Result.failure(DatabaseException(
-        'Failed to update message',
-        originalError: e,
-        stackTrace: stackTrace,
-      ));
+      return Result.failure(
+        DatabaseException(
+          'Failed to update message',
+          originalError: e,
+          stackTrace: stackTrace,
+        ),
+      );
     } catch (e, stackTrace) {
       LoggerService.error('Unexpected error updating message', e, stackTrace);
-      return Result.failure(DatabaseException(
-        'Failed to update message',
-        originalError: e,
-        stackTrace: stackTrace,
-      ));
+      return Result.failure(
+        DatabaseException(
+          'Failed to update message',
+          originalError: e,
+          stackTrace: stackTrace,
+        ),
+      );
     }
   }
 
@@ -398,18 +453,22 @@ class FirebaseService {
       return Result.success(null);
     } on FirebaseException catch (e, stackTrace) {
       LoggerService.error('Failed to delete message', e, stackTrace);
-      return Result.failure(DatabaseException(
-        'Failed to delete message',
-        originalError: e,
-        stackTrace: stackTrace,
-      ));
+      return Result.failure(
+        DatabaseException(
+          'Failed to delete message',
+          originalError: e,
+          stackTrace: stackTrace,
+        ),
+      );
     } catch (e, stackTrace) {
       LoggerService.error('Unexpected error deleting message', e, stackTrace);
-      return Result.failure(DatabaseException(
-        'Failed to delete message',
-        originalError: e,
-        stackTrace: stackTrace,
-      ));
+      return Result.failure(
+        DatabaseException(
+          'Failed to delete message',
+          originalError: e,
+          stackTrace: stackTrace,
+        ),
+      );
     }
   }
 
@@ -429,11 +488,13 @@ class FirebaseService {
       return Result.success(null);
     } catch (e, stackTrace) {
       LoggerService.error('Failed to get subscription', e, stackTrace);
-      return Result.failure(DatabaseException(
-        'Failed to get subscription',
-        originalError: e,
-        stackTrace: stackTrace,
-      ));
+      return Result.failure(
+        DatabaseException(
+          'Failed to get subscription',
+          originalError: e,
+          stackTrace: stackTrace,
+        ),
+      );
     }
   }
 
@@ -465,11 +526,13 @@ class FirebaseService {
       return Result.success(null);
     } catch (e, stackTrace) {
       LoggerService.error('Failed to update subscription', e, stackTrace);
-      return Result.failure(DatabaseException(
-        'Failed to update subscription',
-        originalError: e,
-        stackTrace: stackTrace,
-      ));
+      return Result.failure(
+        DatabaseException(
+          'Failed to update subscription',
+          originalError: e,
+          stackTrace: stackTrace,
+        ),
+      );
     }
   }
 
@@ -487,11 +550,13 @@ class FirebaseService {
       return Result.success(null);
     } catch (e, stackTrace) {
       LoggerService.error('Failed to log usage', e, stackTrace);
-      return Result.failure(DatabaseException(
-        'Failed to log usage',
-        originalError: e,
-        stackTrace: stackTrace,
-      ));
+      return Result.failure(
+        DatabaseException(
+          'Failed to log usage',
+          originalError: e,
+          stackTrace: stackTrace,
+        ),
+      );
     }
   }
 
@@ -513,11 +578,13 @@ class FirebaseService {
       return Result.success(totalUsed);
     } catch (e, stackTrace) {
       LoggerService.error('Failed to get credit usage', e, stackTrace);
-      return Result.failure(DatabaseException(
-        'Failed to get credit usage',
-        originalError: e,
-        stackTrace: stackTrace,
-      ));
+      return Result.failure(
+        DatabaseException(
+          'Failed to get credit usage',
+          originalError: e,
+          stackTrace: stackTrace,
+        ),
+      );
     }
   }
 
@@ -532,7 +599,11 @@ class FirebaseService {
       LoggerService.warning('Failed to update message count', e, stackTrace);
       // Don't throw - this is a non-critical operation
     } catch (e, stackTrace) {
-      LoggerService.warning('Unexpected error updating message count', e, stackTrace);
+      LoggerService.warning(
+        'Unexpected error updating message count',
+        e,
+        stackTrace,
+      );
       // Don't throw - this is a non-critical operation
     }
   }

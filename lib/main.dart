@@ -4,9 +4,11 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'firebase_options.dart';
 import 'config/premium_theme.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'screens/auth/premium_signin_screen.dart';
 import 'screens/auth/signup_screen.dart';
-import 'screens/premium_main_screen.dart';
+import 'screens/app_initializer.dart';
+import 'screens/onboarding/onboarding_screen.dart';
 import 'core/config/env_config.dart';
 import 'core/di/service_locator.dart';
 import 'core/services/logger_service.dart';
@@ -49,7 +51,7 @@ void main() async {
     runApp(const ProviderScope(child: MainApp()));
   } catch (e, stackTrace) {
     LoggerService.fatal('Failed to initialize app', e, stackTrace);
-    
+
     // Show error screen
     runApp(
       MaterialApp(
@@ -93,7 +95,33 @@ class _MainAppState extends State<MainApp> {
   // App States
   bool _isAuthenticated = false;
   bool _isSignUp = false;
+  bool _showOnboarding = false;
+  bool _isCheckingOnboarding = true;
   ThemeMode _themeMode = ThemeMode.light;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkOnboardingStatus();
+  }
+
+  Future<void> _checkOnboardingStatus() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final hasCompletedOnboarding =
+          prefs.getBool('onboarding_complete') ?? false;
+
+      setState(() {
+        _showOnboarding = !hasCompletedOnboarding;
+        _isCheckingOnboarding = false;
+      });
+    } catch (e) {
+      setState(() {
+        _showOnboarding = true; // Show onboarding if check fails
+        _isCheckingOnboarding = false;
+      });
+    }
+  }
 
   void _handleSignInSuccess() {
     setState(() => _isAuthenticated = true);
@@ -116,23 +144,52 @@ class _MainAppState extends State<MainApp> {
 
   @override
   Widget build(BuildContext context) {
+    // Show loading while checking onboarding status
+    if (_isCheckingOnboarding) {
+      return MaterialApp(
+        debugShowCheckedModeBanner: false,
+        home: Scaffold(
+          body: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  PremiumTheme.primary,
+                  PremiumTheme.secondary,
+                  PremiumTheme.accent,
+                ],
+              ),
+            ),
+            child: const Center(
+              child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'AI Mood - Premium Experience',
       themeMode: _themeMode,
       theme: PremiumTheme.lightTheme,
       darkTheme: PremiumTheme.darkTheme,
-      home: _isAuthenticated
-          ? const PremiumMainScreen()
-          : (_isSignUp
-                ? SignUpScreen(
-                    onSignUpSuccess: _handleSignUpSuccess,
-                    onNavigateToSignIn: _navigateToSignIn,
-                  )
-                : PremiumSignInScreen(
-                    onSignInSuccess: _handleSignInSuccess,
-                    onNavigateToSignUp: _navigateToSignUp,
-                  )),
+      home: _showOnboarding
+          ? const OnboardingScreen()
+          : (_isAuthenticated
+                ? const AppInitializer()
+                : (_isSignUp
+                      ? SignUpScreen(
+                          onSignUpSuccess: _handleSignUpSuccess,
+                          onNavigateToSignIn: _navigateToSignIn,
+                        )
+                      : PremiumSignInScreen(
+                          onSignInSuccess: _handleSignInSuccess,
+                          onNavigateToSignUp: _navigateToSignUp,
+                        ))),
     );
   }
 

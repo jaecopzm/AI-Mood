@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../config/premium_theme.dart';
-import 'home/premium_home_screen.dart';
+import 'home/main_home_screen.dart';
 import 'history/premium_history_screen.dart';
 import 'subscription/premium_subscription_screen.dart';
 import 'profile/premium_profile_screen.dart';
@@ -19,7 +19,7 @@ class _PremiumMainScreenState extends State<PremiumMainScreen>
   late AnimationController _fabAnimationController;
 
   final List<Widget> _screens = const [
-    PremiumHomeScreen(),
+    MainHomeScreen(),
     PremiumHistoryScreen(),
     PremiumSubscriptionScreen(),
     PremiumProfileScreen(),

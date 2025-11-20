@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../config/theme.dart';
+import '../../config/premium_theme.dart';
 import '../../models/message_model.dart';
 import '../../widgets/app_widgets.dart';
 
@@ -13,7 +13,7 @@ class MessageAnalyticsScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('Message Analytics'), elevation: 0),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(AppTheme.lg),
+        padding: const EdgeInsets.all(PremiumTheme.spaceLg),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -23,17 +23,17 @@ class MessageAnalyticsScreen extends StatelessWidget {
               label: 'Total Messages',
               value: messages.length.toString(),
               icon: Icons.message_outlined,
-              color: AppTheme.primary,
+              color: PremiumTheme.primary,
             ),
-            const SizedBox(height: AppTheme.md),
+            SizedBox(height: PremiumTheme.spaceMd),
             _buildSummaryCard(
               context,
               label: 'Saved Messages',
               value: messages.where((m) => m.isSaved).length.toString(),
               icon: Icons.bookmark,
-              color: AppTheme.accent,
+              color: PremiumTheme.accent,
             ),
-            const SizedBox(height: AppTheme.md),
+            const SizedBox(height: PremiumTheme.spaceMd),
             _buildSummaryCard(
               context,
               label: 'Total Words',
@@ -44,9 +44,9 @@ class MessageAnalyticsScreen extends StatelessWidget {
                   )
                   .toString(),
               icon: Icons.description_outlined,
-              color: AppTheme.success,
+              color: PremiumTheme.success,
             ),
-            const SizedBox(height: AppTheme.lg),
+            const SizedBox(height: PremiumTheme.spaceLg),
 
             // Average Rating
             AppCard(
@@ -59,19 +59,19 @@ class MessageAnalyticsScreen extends StatelessWidget {
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  const SizedBox(height: AppTheme.md),
+                  const SizedBox(height: PremiumTheme.spaceMd),
                   Row(
                     children: [
                       Text(
                         _calculateAverageRating().toStringAsFixed(1),
                         style: Theme.of(context).textTheme.displaySmall
-                            ?.copyWith(color: AppTheme.primary),
+                            ?.copyWith(color: PremiumTheme.primary),
                       ),
-                      const SizedBox(width: AppTheme.sm),
+                      const SizedBox(width: PremiumTheme.spaceSm),
                       Text(
                         '/ 5.0',
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: AppTheme.textTertiary,
+                          color: PremiumTheme.textTertiary,
                         ),
                       ),
                       const Spacer(),
@@ -82,7 +82,7 @@ class MessageAnalyticsScreen extends StatelessWidget {
                             index < _calculateAverageRating().toInt()
                                 ? Icons.star
                                 : Icons.star_border,
-                            color: AppTheme.accent,
+                            color: PremiumTheme.accent,
                             size: 20,
                           ),
                         ),
@@ -92,35 +92,35 @@ class MessageAnalyticsScreen extends StatelessWidget {
                 ],
               ),
             ),
-            const SizedBox(height: AppTheme.lg),
+            const SizedBox(height: PremiumTheme.spaceLg),
 
             // Recipients Breakdown
             Text(
               'Messages by Recipient',
               style: Theme.of(context).textTheme.titleLarge,
             ),
-            const SizedBox(height: AppTheme.md),
+            const SizedBox(height: PremiumTheme.spaceMd),
             AppCard(child: Column(children: _buildRecipientBreakdown(context))),
-            const SizedBox(height: AppTheme.lg),
+            const SizedBox(height: PremiumTheme.spaceLg),
 
             // Tones Breakdown
             Text(
               'Messages by Tone',
               style: Theme.of(context).textTheme.titleLarge,
             ),
-            const SizedBox(height: AppTheme.md),
+            const SizedBox(height: PremiumTheme.spaceMd),
             AppCard(child: Column(children: _buildToneBreakdown(context))),
-            const SizedBox(height: AppTheme.lg),
+            const SizedBox(height: PremiumTheme.spaceLg),
 
             // Top Rated Messages
             Text(
               'Top Rated Messages',
               style: Theme.of(context).textTheme.titleLarge,
             ),
-            const SizedBox(height: AppTheme.md),
+            const SizedBox(height: PremiumTheme.spaceMd),
             ..._getTopRatedMessages().map((msg) {
               return Padding(
-                padding: const EdgeInsets.only(bottom: AppTheme.md),
+                padding: const EdgeInsets.only(bottom: PremiumTheme.spaceMd),
                 child: AppCard(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -136,14 +136,14 @@ class MessageAnalyticsScreen extends StatelessWidget {
                                 msg.isSaved && index == 0
                                     ? Icons.star
                                     : Icons.star_border,
-                                color: AppTheme.accent,
+                                color: PremiumTheme.accent,
                                 size: 16,
                               ),
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: AppTheme.sm),
+                      const SizedBox(height: PremiumTheme.spaceSm),
                       Text(
                         msg.generatedText.substring(
                               0,
@@ -186,7 +186,7 @@ class MessageAnalyticsScreen extends StatelessWidget {
             ),
             child: Icon(icon, color: color, size: 30),
           ),
-          const SizedBox(width: AppTheme.lg),
+          const SizedBox(width: PremiumTheme.spaceLg),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -195,9 +195,9 @@ class MessageAnalyticsScreen extends StatelessWidget {
                   label,
                   style: Theme.of(
                     context,
-                  ).textTheme.bodySmall?.copyWith(color: AppTheme.textTertiary),
+                  ).textTheme.bodySmall?.copyWith(color: PremiumTheme.textTertiary),
                 ),
-                const SizedBox(height: AppTheme.xs),
+                const SizedBox(height: PremiumTheme.spaceXs),
                 Text(
                   value,
                   style: Theme.of(
@@ -239,17 +239,17 @@ class MessageAnalyticsScreen extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: AppTheme.sm),
+          const SizedBox(height: PremiumTheme.spaceSm),
           ClipRRect(
             borderRadius: BorderRadius.circular(4),
             child: LinearProgressIndicator(
               value: count / messages.length,
-              backgroundColor: AppTheme.primaryLight,
-              valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primary),
+              backgroundColor: PremiumTheme.primaryLight,
+              valueColor: AlwaysStoppedAnimation<Color>(PremiumTheme.primary),
               minHeight: 6,
             ),
           ),
-          if (index < counts.length - 1) const SizedBox(height: AppTheme.md),
+          if (index < counts.length - 1) const SizedBox(height: PremiumTheme.spaceMd),
         ],
       );
     }).toList();
@@ -282,17 +282,17 @@ class MessageAnalyticsScreen extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: AppTheme.sm),
+          const SizedBox(height: PremiumTheme.spaceSm),
           ClipRRect(
             borderRadius: BorderRadius.circular(4),
             child: LinearProgressIndicator(
               value: count / messages.length,
-              backgroundColor: AppTheme.accentLight,
-              valueColor: AlwaysStoppedAnimation<Color>(AppTheme.accent),
+              backgroundColor: PremiumTheme.accentLight,
+              valueColor: AlwaysStoppedAnimation<Color>(PremiumTheme.accent),
               minHeight: 6,
             ),
           ),
-          if (index < counts.length - 1) const SizedBox(height: AppTheme.md),
+          if (index < counts.length - 1) const SizedBox(height: PremiumTheme.spaceMd),
         ],
       );
     }).toList();
@@ -317,3 +317,4 @@ class MessageAnalyticsScreen extends StatelessWidget {
     return text[0].toUpperCase() + text.substring(1).replaceAll('_', ' ');
   }
 }
+

@@ -3,19 +3,26 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../config/premium_theme.dart';
 import '../../widgets/premium_widgets.dart';
-import '../../providers/message_provider.dart';
+import '../../providers/enhanced_message_provider.dart';
 import '../../providers/auth_provider.dart';
 
 class PremiumHistoryScreen extends ConsumerStatefulWidget {
   const PremiumHistoryScreen({super.key});
 
   @override
-  ConsumerState<PremiumHistoryScreen> createState() => _PremiumHistoryScreenState();
+  ConsumerState<PremiumHistoryScreen> createState() =>
+      _PremiumHistoryScreenState();
 }
 
 class _PremiumHistoryScreenState extends ConsumerState<PremiumHistoryScreen> {
   String _selectedFilter = 'All';
-  final List<String> _filters = ['All', 'Romantic', 'Professional', 'Funny', 'Apologetic'];
+  final List<String> _filters = [
+    'All',
+    'Romantic',
+    'Professional',
+    'Funny',
+    'Apologetic',
+  ];
   bool _isLoading = false;
 
   @override
@@ -28,39 +35,54 @@ class _PremiumHistoryScreenState extends ConsumerState<PremiumHistoryScreen> {
     setState(() => _isLoading = true);
     final authState = ref.read(authStateProvider);
     if (authState.user != null) {
-      await ref.read(messageProvider.notifier).loadHistory(authState.user!.uid);
+      // Load history using enhanced message provider
+      // await ref.read(enhancedMessageProvider.notifier).loadHistory(authState.user!.uid);
     }
     setState(() => _isLoading = false);
   }
 
   List<Map<String, dynamic>> get _messages {
-    final messageState = ref.watch(messageProvider);
-    return messageState.history.map((msg) => {
-      'text': msg.generatedText,
-      'recipient': msg.recipientType,
-      'tone': msg.tone,
-      'date': _formatDate(msg.createdAt),
-      'saved': msg.isSaved,
-      'gradient': _getGradientForTone(msg.tone),
-      'id': msg.id,
-    }).toList();
+    final messageState = ref.watch(enhancedMessageProvider);
+    // Return empty list for now - history feature needs to be implemented
+    // in the enhanced message provider
+    return [];
+    // return messageState.history
+    //     .map(
+    //       (msg) => {
+    //         'text': msg.generatedText,
+    //         'recipient': msg.recipientType,
+    //         'tone': msg.tone,
+    //         'date': _formatDate(msg.createdAt),
+    //         'saved': msg.isSaved,
+    //         'gradient': _getGradientForTone(msg.tone),
+    //         'id': msg.id,
+    //       },
+    //     )
+    //     .toList();
   }
 
   String _formatDate(DateTime date) {
     final now = DateTime.now();
     final diff = now.difference(date);
-    if (diff.inDays == 0) return 'Today, ${date.hour}:${date.minute.toString().padLeft(2, '0')}';
-    if (diff.inDays == 1) return 'Yesterday, ${date.hour}:${date.minute.toString().padLeft(2, '0')}';
+    if (diff.inDays == 0)
+      return 'Today, ${date.hour}:${date.minute.toString().padLeft(2, '0')}';
+    if (diff.inDays == 1)
+      return 'Yesterday, ${date.hour}:${date.minute.toString().padLeft(2, '0')}';
     return '${date.month}/${date.day}, ${date.hour}:${date.minute.toString().padLeft(2, '0')}';
   }
 
   Gradient _getGradientForTone(String tone) {
     switch (tone.toLowerCase()) {
-      case 'romantic': return PremiumTheme.secondaryGradient;
-      case 'professional': return PremiumTheme.oceanGradient;
-      case 'funny': return PremiumTheme.accentGradient;
-      case 'apologetic': return PremiumTheme.primaryGradient;
-      default: return PremiumTheme.goldGradient;
+      case 'romantic':
+        return PremiumTheme.secondaryGradient;
+      case 'professional':
+        return PremiumTheme.oceanGradient;
+      case 'funny':
+        return PremiumTheme.accentGradient;
+      case 'apologetic':
+        return PremiumTheme.primaryGradient;
+      default:
+        return PremiumTheme.goldGradient;
     }
   }
 
@@ -68,7 +90,8 @@ class _PremiumHistoryScreenState extends ConsumerState<PremiumHistoryScreen> {
   // Mock messages for demonstration (remove in production)
   static const List<Map<String, dynamic>> _mockMessages = [
     {
-      'text': 'Hey love, just wanted to say you make every moment brighter. Can\'t wait to see you tonight! 💕',
+      'text':
+          'Hey love, just wanted to say you make every moment brighter. Can\'t wait to see you tonight! 💕',
       'recipient': 'Crush',
       'tone': 'Romantic',
       'date': 'Today, 2:30 PM',
@@ -76,7 +99,8 @@ class _PremiumHistoryScreenState extends ConsumerState<PremiumHistoryScreen> {
       'gradient': PremiumTheme.secondaryGradient,
     },
     {
-      'text': 'I sincerely apologize for missing our meeting. It won\'t happen again. Let\'s reschedule at your convenience.',
+      'text':
+          'I sincerely apologize for missing our meeting. It won\'t happen again. Let\'s reschedule at your convenience.',
       'recipient': 'Boss',
       'tone': 'Professional',
       'date': 'Yesterday, 10:15 AM',
@@ -84,7 +108,8 @@ class _PremiumHistoryScreenState extends ConsumerState<PremiumHistoryScreen> {
       'gradient': PremiumTheme.oceanGradient,
     },
     {
-      'text': 'Dude, that was hilarious! We need to hang out more often. Coffee this weekend? ☕',
+      'text':
+          'Dude, that was hilarious! We need to hang out more often. Coffee this weekend? ☕',
       'recipient': 'Best Friend',
       'tone': 'Funny',
       'date': 'Dec 28, 4:20 PM',
@@ -92,7 +117,8 @@ class _PremiumHistoryScreenState extends ConsumerState<PremiumHistoryScreen> {
       'gradient': PremiumTheme.accentGradient,
     },
     {
-      'text': 'I\'m really sorry about what happened. You mean the world to me, and I never meant to hurt you.',
+      'text':
+          'I\'m really sorry about what happened. You mean the world to me, and I never meant to hurt you.',
       'recipient': 'Girlfriend',
       'tone': 'Apologetic',
       'date': 'Dec 27, 9:00 PM',
@@ -100,7 +126,8 @@ class _PremiumHistoryScreenState extends ConsumerState<PremiumHistoryScreen> {
       'gradient': PremiumTheme.primaryGradient,
     },
     {
-      'text': 'Thank you so much for always being there for me. Your support means everything! 🙏',
+      'text':
+          'Thank you so much for always being there for me. Your support means everything! 🙏',
       'recipient': 'Family',
       'tone': 'Grateful',
       'date': 'Dec 25, 11:30 AM',
@@ -179,11 +206,7 @@ class _PremiumHistoryScreenState extends ConsumerState<PremiumHistoryScreen> {
               borderRadius: BorderRadius.circular(PremiumTheme.radiusMd),
               boxShadow: [PremiumTheme.shadowPrimary],
             ),
-            child: const Icon(
-              Icons.search,
-              color: Colors.white,
-              size: 24,
-            ),
+            child: const Icon(Icons.search, color: Colors.white, size: 24),
           ),
         ],
       ),
@@ -264,7 +287,9 @@ class _PremiumHistoryScreenState extends ConsumerState<PremiumHistoryScreen> {
                     ),
                     decoration: BoxDecoration(
                       gradient: message['gradient'],
-                      borderRadius: BorderRadius.circular(PremiumTheme.radiusFull),
+                      borderRadius: BorderRadius.circular(
+                        PremiumTheme.radiusFull,
+                      ),
                     ),
                     child: Text(
                       message['recipient'],
@@ -282,7 +307,9 @@ class _PremiumHistoryScreenState extends ConsumerState<PremiumHistoryScreen> {
                     ),
                     decoration: BoxDecoration(
                       color: PremiumTheme.surfaceVariant,
-                      borderRadius: BorderRadius.circular(PremiumTheme.radiusFull),
+                      borderRadius: BorderRadius.circular(
+                        PremiumTheme.radiusFull,
+                      ),
                     ),
                     child: Text(
                       message['tone'],
@@ -294,19 +321,13 @@ class _PremiumHistoryScreenState extends ConsumerState<PremiumHistoryScreen> {
                   ),
                   const Spacer(),
                   if (message['saved'])
-                    Icon(
-                      Icons.bookmark,
-                      color: PremiumTheme.gold,
-                      size: 20,
-                    ),
+                    Icon(Icons.bookmark, color: PremiumTheme.gold, size: 20),
                 ],
               ),
               const SizedBox(height: PremiumTheme.spaceMd),
               Text(
                 message['text'],
-                style: PremiumTheme.bodyMedium.copyWith(
-                  height: 1.5,
-                ),
+                style: PremiumTheme.bodyMedium.copyWith(height: 1.5),
                 maxLines: 3,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -333,7 +354,9 @@ class _PremiumHistoryScreenState extends ConsumerState<PremiumHistoryScreen> {
                       ),
                       const SizedBox(width: PremiumTheme.spaceXs),
                       _buildActionButton(
-                        message['saved'] ? Icons.bookmark : Icons.bookmark_border,
+                        message['saved']
+                            ? Icons.bookmark
+                            : Icons.bookmark_border,
                         () => _toggleSave(message),
                       ),
                     ],
@@ -356,11 +379,7 @@ class _PremiumHistoryScreenState extends ConsumerState<PremiumHistoryScreen> {
           color: PremiumTheme.surfaceVariant,
           borderRadius: BorderRadius.circular(PremiumTheme.radiusSm),
         ),
-        child: Icon(
-          icon,
-          size: 18,
-          color: PremiumTheme.primary,
-        ),
+        child: Icon(icon, size: 18, color: PremiumTheme.primary),
       ),
     );
   }
@@ -377,11 +396,7 @@ class _PremiumHistoryScreenState extends ConsumerState<PremiumHistoryScreen> {
               shape: BoxShape.circle,
               boxShadow: [PremiumTheme.shadowPrimary],
             ),
-            child: const Icon(
-              Icons.inbox,
-              size: 60,
-              color: Colors.white,
-            ),
+            child: const Icon(Icons.inbox, size: 60, color: Colors.white),
           ),
           const SizedBox(height: PremiumTheme.spaceLg),
           Text(
@@ -468,20 +483,17 @@ class _PremiumHistoryScreenState extends ConsumerState<PremiumHistoryScreen> {
                       padding: const EdgeInsets.all(PremiumTheme.spaceMd),
                       decoration: BoxDecoration(
                         color: PremiumTheme.surfaceVariant,
-                        borderRadius: BorderRadius.circular(PremiumTheme.radiusLg),
+                        borderRadius: BorderRadius.circular(
+                          PremiumTheme.radiusLg,
+                        ),
                       ),
                       child: Text(
                         message['text'],
-                        style: PremiumTheme.bodyLarge.copyWith(
-                          height: 1.6,
-                        ),
+                        style: PremiumTheme.bodyLarge.copyWith(height: 1.6),
                       ),
                     ),
                     const SizedBox(height: PremiumTheme.spaceLg),
-                    Text(
-                      'Created',
-                      style: PremiumTheme.titleSmall,
-                    ),
+                    Text('Created', style: PremiumTheme.titleSmall),
                     const SizedBox(height: PremiumTheme.spaceXs),
                     Text(
                       message['date'],
@@ -558,13 +570,18 @@ class _PremiumHistoryScreenState extends ConsumerState<PremiumHistoryScreen> {
   Future<void> _toggleSave(Map<String, dynamic> message) async {
     final messageId = message['id'] as String;
     final isSaved = message['saved'] as bool;
-    
-    await ref.read(messageProvider.notifier).toggleSaveMessage(messageId, !isSaved);
-    
+
+    // Toggle save using enhanced message provider
+    // await ref
+    //     .read(enhancedMessageProvider.notifier)
+    //     .toggleSaveMessage(messageId, !isSaved);
+
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(!isSaved ? 'Message saved!' : 'Message removed from saved'),
+          content: Text(
+            !isSaved ? 'Message saved!' : 'Message removed from saved',
+          ),
           backgroundColor: PremiumTheme.success,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(

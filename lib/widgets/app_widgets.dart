@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../config/theme.dart';
+import '../config/premium_theme.dart';
 
 class AppButton extends StatelessWidget {
   final String label;
@@ -31,10 +31,10 @@ class AppButton extends StatelessWidget {
       child: ElevatedButton(
         onPressed: isDisabled || isLoading ? null : onPressed,
         style: ElevatedButton.styleFrom(
-          backgroundColor: backgroundColor ?? AppTheme.primary,
-          disabledBackgroundColor: AppTheme.border,
+          backgroundColor: backgroundColor ?? PremiumTheme.primary,
+          disabledBackgroundColor: PremiumTheme.border,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+            borderRadius: BorderRadius.circular(PremiumTheme.radiusMd),
           ),
         ),
         child: isLoading
@@ -53,7 +53,7 @@ class AppButton extends StatelessWidget {
                 children: [
                   if (icon != null) ...[
                     Icon(icon, size: 20),
-                    const SizedBox(width: AppTheme.sm),
+                    const SizedBox(width: PremiumTheme.spaceSm),
                   ],
                   Text(
                     label,
@@ -96,24 +96,27 @@ class AppOutlineButton extends StatelessWidget {
       child: OutlinedButton(
         onPressed: onPressed,
         style: OutlinedButton.styleFrom(
-          side: BorderSide(color: borderColor ?? AppTheme.primary, width: 2),
+          side: BorderSide(
+            color: borderColor ?? PremiumTheme.primary,
+            width: 2,
+          ),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+            borderRadius: BorderRadius.circular(PremiumTheme.radiusMd),
           ),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             if (icon != null) ...[
-              Icon(icon, size: 20, color: textColor ?? AppTheme.primary),
-              const SizedBox(width: AppTheme.sm),
+              Icon(icon, size: 20, color: textColor ?? PremiumTheme.primary),
+              const SizedBox(width: PremiumTheme.spaceSm),
             ],
             Text(
               label,
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
-                color: textColor ?? AppTheme.primary,
+                color: textColor ?? PremiumTheme.primary,
               ),
             ),
           ],
@@ -174,10 +177,10 @@ class _AppTextFieldState extends State<AppTextField> {
           style: const TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
-            color: AppTheme.textPrimary,
+            color: PremiumTheme.textPrimary,
           ),
         ),
-        const SizedBox(height: AppTheme.sm),
+        const SizedBox(height: PremiumTheme.spaceSm),
         TextFormField(
           controller: widget.controller,
           validator: widget.validator,
@@ -188,13 +191,13 @@ class _AppTextFieldState extends State<AppTextField> {
           decoration: InputDecoration(
             hintText: widget.hint,
             prefixIcon: widget.prefixIcon != null
-                ? Icon(widget.prefixIcon, color: AppTheme.textSecondary)
+                ? Icon(widget.prefixIcon, color: PremiumTheme.textSecondary)
                 : null,
             suffixIcon: widget.suffixIcon != null
                 ? IconButton(
                     icon: Icon(
                       _obscureText ? Icons.visibility_off : Icons.visibility,
-                      color: AppTheme.textSecondary,
+                      color: PremiumTheme.textSecondary,
                     ),
                     onPressed: () {
                       setState(() => _obscureText = !_obscureText);
@@ -221,11 +224,11 @@ class AppCard extends StatelessWidget {
   const AppCard({
     super.key,
     required this.child,
-    this.padding = const EdgeInsets.all(AppTheme.md),
+    this.padding = const EdgeInsets.all(PremiumTheme.spaceMd),
     this.backgroundColor,
-    this.borderColor = AppTheme.border,
+    this.borderColor = PremiumTheme.border,
     this.onTap,
-    this.borderRadius = AppTheme.radiusLg,
+    this.borderRadius = PremiumTheme.radiusLg,
     this.boxShadow,
   });
 
@@ -236,10 +239,10 @@ class AppCard extends StatelessWidget {
       child: Container(
         padding: padding,
         decoration: BoxDecoration(
-          color: backgroundColor ?? AppTheme.surface,
-          border: Border.all(color: borderColor ?? AppTheme.border),
+          color: backgroundColor ?? PremiumTheme.surface,
+          border: Border.all(color: borderColor ?? PremiumTheme.border),
           borderRadius: BorderRadius.circular(borderRadius),
-          boxShadow: boxShadow ?? AppTheme.shadowSmList,
+          boxShadow: boxShadow ?? [PremiumTheme.shadowSm],
         ),
         child: child,
       ),
@@ -267,26 +270,26 @@ class AppBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(
-        horizontal: AppTheme.sm,
-        vertical: AppTheme.xs,
+        horizontal: PremiumTheme.spaceSm,
+        vertical: PremiumTheme.spaceXs,
       ),
       decoration: BoxDecoration(
-        color: backgroundColor ?? AppTheme.primaryLight,
-        borderRadius: BorderRadius.circular(AppTheme.radiusSm),
+        color: backgroundColor ?? PremiumTheme.primaryLight,
+        borderRadius: BorderRadius.circular(PremiumTheme.radiusSm),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           if (icon != null) ...[
-            Icon(icon, size: 14, color: textColor ?? AppTheme.primary),
-            const SizedBox(width: AppTheme.xs),
+            Icon(icon, size: 14, color: textColor ?? PremiumTheme.primary),
+            const SizedBox(width: PremiumTheme.spaceXs),
           ],
           Text(
             label,
             style: TextStyle(
               fontSize: fontSize,
               fontWeight: FontWeight.w600,
-              color: textColor ?? AppTheme.primary,
+              color: textColor ?? PremiumTheme.primary,
             ),
           ),
         ],
@@ -309,17 +312,17 @@ class AppLoading extends StatelessWidget {
         children: [
           CircularProgressIndicator(
             valueColor: AlwaysStoppedAnimation<Color>(
-              color ?? AppTheme.primary,
+              color ?? PremiumTheme.primary,
             ),
             strokeWidth: 3,
           ),
           if (message != null) ...[
-            const SizedBox(height: AppTheme.md),
+            const SizedBox(height: PremiumTheme.spaceMd),
             Text(
               message!,
               style: const TextStyle(
                 fontSize: 14,
-                color: AppTheme.textSecondary,
+                color: PremiumTheme.textSecondary,
               ),
             ),
           ],
@@ -347,19 +350,19 @@ class AppErrorWidget extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, size: 64, color: AppTheme.error),
-          const SizedBox(height: AppTheme.md),
+          Icon(icon, size: 64, color: PremiumTheme.error),
+          const SizedBox(height: PremiumTheme.spaceMd),
           Text(
             message,
             textAlign: TextAlign.center,
             style: const TextStyle(
               fontSize: 16,
-              color: AppTheme.textPrimary,
+              color: PremiumTheme.textPrimary,
               fontWeight: FontWeight.w500,
             ),
           ),
           if (onRetry != null) ...[
-            const SizedBox(height: AppTheme.lg),
+            const SizedBox(height: PremiumTheme.spaceLg),
             AppButton(
               label: 'Try Again',
               onPressed: onRetry!,
@@ -396,8 +399,8 @@ class AppGradientButton extends StatelessWidget {
         height: 56,
         decoration: BoxDecoration(
           gradient: gradient,
-          borderRadius: BorderRadius.circular(AppTheme.radiusMd),
-          boxShadow: AppTheme.shadowMdList,
+          borderRadius: BorderRadius.circular(PremiumTheme.radiusMd),
+          boxShadow: [PremiumTheme.shadowMd],
         ),
         child: Center(
           child: isLoading
@@ -414,7 +417,7 @@ class AppGradientButton extends StatelessWidget {
                   children: [
                     if (icon != null) ...[
                       Icon(icon, color: Colors.white, size: 20),
-                      const SizedBox(width: AppTheme.sm),
+                      const SizedBox(width: PremiumTheme.spaceSm),
                     ],
                     Text(
                       label,

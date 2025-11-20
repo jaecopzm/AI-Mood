@@ -21,29 +21,23 @@ abstract class AppException implements Exception {
 /// Network related exceptions
 class NetworkException extends AppException {
   NetworkException(
-    String message, {
-    dynamic originalError,
-    StackTrace? stackTrace,
+    super.message, {
+    super.originalError,
+    super.stackTrace,
   }) : super(
-          message,
           code: 'NETWORK_ERROR',
-          originalError: originalError,
-          stackTrace: stackTrace,
         );
 }
 
 /// Authentication related exceptions
 class AuthException extends AppException {
   AuthException(
-    String message, {
+    super.message, {
     String? code,
-    dynamic originalError,
-    StackTrace? stackTrace,
+    super.originalError,
+    super.stackTrace,
   }) : super(
-          message,
           code: code ?? 'AUTH_ERROR',
-          originalError: originalError,
-          stackTrace: stackTrace,
         );
 }
 
@@ -52,72 +46,57 @@ class ValidationException extends AppException {
   final Map<String, String>? fieldErrors;
 
   ValidationException(
-    String message, {
+    super.message, {
     this.fieldErrors,
-    dynamic originalError,
-    StackTrace? stackTrace,
+    super.originalError,
+    super.stackTrace,
   }) : super(
-          message,
           code: 'VALIDATION_ERROR',
-          originalError: originalError,
-          stackTrace: stackTrace,
         );
 }
 
 /// AI Service related exceptions
 class AIServiceException extends AppException {
   AIServiceException(
-    String message, {
-    dynamic originalError,
-    StackTrace? stackTrace,
+    super.message, {
+    super.originalError,
+    super.stackTrace,
   }) : super(
-          message,
           code: 'AI_SERVICE_ERROR',
-          originalError: originalError,
-          stackTrace: stackTrace,
         );
 }
 
 /// Firebase/Database related exceptions
 class DatabaseException extends AppException {
   DatabaseException(
-    String message, {
+    super.message, {
     String? code,
-    dynamic originalError,
-    StackTrace? stackTrace,
+    super.originalError,
+    super.stackTrace,
   }) : super(
-          message,
           code: code ?? 'DATABASE_ERROR',
-          originalError: originalError,
-          stackTrace: stackTrace,
         );
 }
 
 /// Not Found exceptions
 class NotFoundException extends AppException {
   NotFoundException(
-    String message, {
-    dynamic originalError,
-    StackTrace? stackTrace,
+    super.message, {
+    super.originalError,
+    super.stackTrace,
   }) : super(
-          message,
           code: 'NOT_FOUND',
-          originalError: originalError,
-          stackTrace: stackTrace,
         );
 }
 
 /// Permission related exceptions
 class PermissionException extends AppException {
   PermissionException(
-    String message, {
-    dynamic originalError,
-    StackTrace? stackTrace,
+    super.message, {
+    super.originalError,
+    super.stackTrace,
   }) : super(
-          message,
           code: 'PERMISSION_DENIED',
-          originalError: originalError,
-          stackTrace: stackTrace,
         );
 }
 
@@ -126,15 +105,12 @@ class RateLimitException extends AppException {
   final int? retryAfterSeconds;
 
   RateLimitException(
-    String message, {
+    super.message, {
     this.retryAfterSeconds,
-    dynamic originalError,
-    StackTrace? stackTrace,
+    super.originalError,
+    super.stackTrace,
   }) : super(
-          message,
           code: 'RATE_LIMIT_EXCEEDED',
-          originalError: originalError,
-          stackTrace: stackTrace,
         );
 }
 
@@ -143,28 +119,22 @@ class ServerException extends AppException {
   final int? statusCode;
 
   ServerException(
-    String message, {
+    super.message, {
     this.statusCode,
-    dynamic originalError,
-    StackTrace? stackTrace,
+    super.originalError,
+    super.stackTrace,
   }) : super(
-          message,
           code: 'SERVER_ERROR',
-          originalError: originalError,
-          stackTrace: stackTrace,
         );
 }
 
 /// Configuration error exceptions
 class ConfigurationException extends AppException {
   ConfigurationException(
-    String message, {
-    dynamic originalError,
-    StackTrace? stackTrace,
+    super.message, {
+    super.originalError,
+    super.stackTrace,
   }) : super(
-          message,
           code: 'CONFIGURATION_ERROR',
-          originalError: originalError,
-          stackTrace: stackTrace,
         );
 }

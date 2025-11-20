@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../config/theme.dart';
+import '../config/premium_theme.dart';
 import '../widgets/app_widgets.dart';
 
 class MessageFilterPanel extends StatefulWidget {
@@ -53,7 +53,7 @@ class _MessageFilterPanelState extends State<MessageFilterPanel> {
   Widget build(BuildContext context) {
     return SingleChildScrollView(
       child: Padding(
-        padding: const EdgeInsets.all(AppTheme.lg),
+        padding: const EdgeInsets.all(PremiumTheme.spaceLg),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -75,7 +75,7 @@ class _MessageFilterPanelState extends State<MessageFilterPanel> {
                 ),
               ],
             ),
-            const SizedBox(height: AppTheme.lg),
+            const SizedBox(height: PremiumTheme.spaceLg),
 
             // Search
             AppTextField(
@@ -84,7 +84,7 @@ class _MessageFilterPanelState extends State<MessageFilterPanel> {
               controller: _searchController,
               prefixIcon: Icons.search,
             ),
-            const SizedBox(height: AppTheme.lg),
+            const SizedBox(height: PremiumTheme.spaceLg),
 
             // Recipient Filter
             Text(
@@ -93,10 +93,10 @@ class _MessageFilterPanelState extends State<MessageFilterPanel> {
                 context,
               ).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600),
             ),
-            const SizedBox(height: AppTheme.sm),
+            const SizedBox(height: PremiumTheme.spaceSm),
             Wrap(
-              spacing: AppTheme.sm,
-              runSpacing: AppTheme.sm,
+              spacing: PremiumTheme.spaceSm,
+              runSpacing: PremiumTheme.spaceSm,
               children: [
                 FilterChip(
                   label: const Text('All'),
@@ -120,7 +120,7 @@ class _MessageFilterPanelState extends State<MessageFilterPanel> {
                 }),
               ],
             ),
-            const SizedBox(height: AppTheme.lg),
+            const SizedBox(height: PremiumTheme.spaceLg),
 
             // Saved Only Filter
             CheckboxListTile(
@@ -132,9 +132,9 @@ class _MessageFilterPanelState extends State<MessageFilterPanel> {
               title: const Text('Show Saved Only'),
               contentPadding: EdgeInsets.zero,
               controlAffinity: ListTileControlAffinity.leading,
-              activeColor: AppTheme.primary,
+              activeColor: PremiumTheme.primary,
             ),
-            const SizedBox(height: AppTheme.lg),
+            const SizedBox(height: PremiumTheme.spaceLg),
 
             // Apply Button
             AppButton(

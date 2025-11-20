@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../config/theme.dart';
+import '../config/premium_theme.dart';
 
 // Theme mode provider
 final themeModeProvider = StateNotifierProvider<ThemeModeNotifier, ThemeMode>((
@@ -28,12 +28,12 @@ final darkTheme = ThemeData(
   useMaterial3: true,
   brightness: Brightness.dark,
   colorScheme: ColorScheme.dark(
-    primary: AppTheme.primary,
-    secondary: AppTheme.accent,
-    tertiary: AppTheme.success,
+    primary: PremiumTheme.primary,
+    secondary: PremiumTheme.accent,
+    tertiary: PremiumTheme.success,
     surface: const Color(0xFF1E1E2E),
     onSurface: const Color(0xFFF5F5F5),
-    error: AppTheme.error,
+    error: PremiumTheme.error,
     onError: Colors.white,
   ),
   scaffoldBackgroundColor: const Color(0xFF121212),
@@ -114,23 +114,23 @@ final darkTheme = ThemeData(
     ),
     focusedBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(12),
-      borderSide: const BorderSide(color: AppTheme.primary, width: 2),
+      borderSide: const BorderSide(color: PremiumTheme.primary, width: 2),
     ),
     errorBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(12),
-      borderSide: const BorderSide(color: AppTheme.error),
+      borderSide: const BorderSide(color: PremiumTheme.error),
     ),
     focusedErrorBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(12),
-      borderSide: const BorderSide(color: AppTheme.error, width: 2),
+      borderSide: const BorderSide(color: PremiumTheme.error, width: 2),
     ),
     labelStyle: const TextStyle(color: Color(0xFFD1D5DB)),
     hintStyle: const TextStyle(color: Color(0xFF9CA3AF)),
-    errorStyle: const TextStyle(color: AppTheme.error),
+    errorStyle: const TextStyle(color: PremiumTheme.error),
   ),
   elevatedButtonTheme: ElevatedButtonThemeData(
     style: ElevatedButton.styleFrom(
-      backgroundColor: AppTheme.primary,
+      backgroundColor: PremiumTheme.primary,
       foregroundColor: Colors.white,
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -139,15 +139,15 @@ final darkTheme = ThemeData(
   ),
   outlinedButtonTheme: OutlinedButtonThemeData(
     style: OutlinedButton.styleFrom(
-      foregroundColor: AppTheme.primary,
-      side: const BorderSide(color: AppTheme.primary),
+      foregroundColor: PremiumTheme.primary,
+      side: const BorderSide(color: PremiumTheme.primary),
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
     ),
   ),
   textButtonTheme: TextButtonThemeData(
     style: TextButton.styleFrom(
-      foregroundColor: AppTheme.primary,
+      foregroundColor: PremiumTheme.primary,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
     ),
   ),
@@ -158,35 +158,35 @@ final darkTheme = ThemeData(
   ),
   bottomNavigationBarTheme: BottomNavigationBarThemeData(
     backgroundColor: const Color(0xFF1E1E2E),
-    selectedItemColor: AppTheme.primary,
+    selectedItemColor: PremiumTheme.primary,
     unselectedItemColor: const Color(0xFF9CA3AF),
     elevation: 8,
     type: BottomNavigationBarType.fixed,
   ),
   chipTheme: ChipThemeData(
     backgroundColor: const Color(0xFF2E2E3E),
-    selectedColor: AppTheme.primary.withValues(alpha: 0.2),
+    selectedColor: PremiumTheme.primary.withValues(alpha: 0.2),
     labelStyle: const TextStyle(color: Color(0xFFF5F5F5)),
     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
     side: const BorderSide(color: Color(0xFF3E3E4E)),
   ),
   sliderTheme: SliderThemeData(
-    activeTrackColor: AppTheme.primary,
+    activeTrackColor: PremiumTheme.primary,
     inactiveTrackColor: const Color(0xFF3E3E4E),
-    thumbColor: AppTheme.primary,
-    overlayColor: AppTheme.primary.withValues(alpha: 0.2),
+    thumbColor: PremiumTheme.primary,
+    overlayColor: PremiumTheme.primary.withValues(alpha: 0.2),
     trackHeight: 4,
   ),
   switchTheme: SwitchThemeData(
     thumbColor: WidgetStateProperty.resolveWith((states) {
       if (states.contains(WidgetState.selected)) {
-        return AppTheme.primary;
+        return PremiumTheme.primary;
       }
       return const Color(0xFF9CA3AF);
     }),
     trackColor: WidgetStateProperty.resolveWith((states) {
       if (states.contains(WidgetState.selected)) {
-        return AppTheme.primary.withValues(alpha: 0.4);
+        return PremiumTheme.primary.withValues(alpha: 0.4);
       }
       return const Color(0xFF3E3E4E);
     }),

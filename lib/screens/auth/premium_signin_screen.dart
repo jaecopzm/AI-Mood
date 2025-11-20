@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../config/premium_theme.dart';
 import '../../widgets/premium_widgets.dart';
+import '../../core/services/logger_service.dart';
+import '../../providers/auth_provider.dart';
 
-class PremiumSignInScreen extends StatefulWidget {
+class PremiumSignInScreen extends ConsumerStatefulWidget {
   final VoidCallback onSignInSuccess;
   final VoidCallback onNavigateToSignUp;
 
@@ -13,10 +16,11 @@ class PremiumSignInScreen extends StatefulWidget {
   });
 
   @override
-  State<PremiumSignInScreen> createState() => _PremiumSignInScreenState();
+  ConsumerState<PremiumSignInScreen> createState() =>
+      _PremiumSignInScreenState();
 }
 
-class _PremiumSignInScreenState extends State<PremiumSignInScreen>
+class _PremiumSignInScreenState extends ConsumerState<PremiumSignInScreen>
     with SingleTickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
@@ -37,12 +41,10 @@ class _PremiumSignInScreenState extends State<PremiumSignInScreen>
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(parent: _animationController, curve: Curves.easeIn),
     );
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.3),
-      end: Offset.zero,
-    ).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
-    );
+    _slideAnimation =
+        Tween<Offset>(begin: const Offset(0, 0.3), end: Offset.zero).animate(
+          CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
+        );
     _animationController.forward();
   }
 
@@ -59,11 +61,73 @@ class _PremiumSignInScreenState extends State<PremiumSignInScreen>
 
     setState(() => _isLoading = true);
 
-    // Simulate sign in
-    await Future.delayed(const Duration(seconds: 2));
+    try {
+      LoggerService.info('🔐 Attempting email/password sign-in');
 
-    setState(() => _isLoading = false);
-    widget.onSignInSuccess();
+      // Use Firebase Auth via provider
+      await ref
+          .read(authStateProvider.notifier)
+          .signIn(_emailController.text.trim(), _passwordController.text);
+
+      // Check if sign-in was successful
+      final authState = ref.read(authStateProvider);
+      if (authState.isAuthenticated) {
+        LoggerService.info('✅ Email sign-in successful');
+        widget.onSignInSuccess();
+      } else if (authState.error != null) {
+        throw Exception(authState.error);
+      }
+    } catch (e) {
+      LoggerService.error('❌ Email sign-in failed', e);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Sign in failed: ${e.toString()}'),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(PremiumTheme.radiusMd),
+            ),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  Future<void> _handleGoogleSignIn() async {
+    try {
+      LoggerService.info('🔐 Attempting Google Sign-In');
+
+      // Use Firebase Google Auth via provider
+      await ref.read(authStateProvider.notifier).signInWithGoogle();
+
+      // Check if sign-in was successful
+      final authState = ref.read(authStateProvider);
+      if (authState.isAuthenticated) {
+        LoggerService.info('✅ Google Sign-In successful');
+        widget.onSignInSuccess();
+      } else if (authState.error != null) {
+        throw Exception(authState.error);
+      }
+    } catch (e) {
+      LoggerService.error('❌ Google Sign-In failed', e);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Google Sign-In failed: ${e.toString()}'),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(PremiumTheme.radiusMd),
+            ),
+          ),
+        );
+      }
+    }
   }
 
   @override
@@ -125,11 +189,7 @@ class _PremiumSignInScreenState extends State<PremiumSignInScreen>
               child: ShaderMask(
                 shaderCallback: (bounds) =>
                     PremiumTheme.premiumGradient.createShader(bounds),
-                child: const Icon(
-                  Icons.diamond,
-                  size: 64,
-                  color: Colors.white,
-                ),
+                child: const Icon(Icons.diamond, size: 64, color: Colors.white),
               ),
             ),
             const SizedBox(height: PremiumTheme.spaceLg),
@@ -219,7 +279,9 @@ class _PremiumSignInScreenState extends State<PremiumSignInScreen>
                   const SizedBox(height: PremiumTheme.spaceSm),
                   Container(
                     decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(PremiumTheme.radiusMd),
+                      borderRadius: BorderRadius.circular(
+                        PremiumTheme.radiusMd,
+                      ),
                       border: Border.all(color: PremiumTheme.border),
                       color: PremiumTheme.surfaceVariant,
                     ),
@@ -253,7 +315,9 @@ class _PremiumSignInScreenState extends State<PremiumSignInScreen>
                             color: PremiumTheme.textSecondary,
                           ),
                           onPressed: () {
-                            setState(() => _obscurePassword = !_obscurePassword);
+                            setState(
+                              () => _obscurePassword = !_obscurePassword,
+                            );
                           },
                         ),
                         border: InputBorder.none,
@@ -309,17 +373,7 @@ class _PremiumSignInScreenState extends State<PremiumSignInScreen>
                 ],
               ),
               const SizedBox(height: PremiumTheme.spaceLg),
-              _buildSocialButton(
-                'Continue with Google',
-                Icons.g_mobiledata,
-                () {},
-              ),
-              const SizedBox(height: PremiumTheme.spaceSm),
-              _buildSocialButton(
-                'Continue with Apple',
-                Icons.apple,
-                () {},
-              ),
+              _buildGoogleSignInButton(),
             ],
           ),
         ),
@@ -327,24 +381,39 @@ class _PremiumSignInScreenState extends State<PremiumSignInScreen>
     );
   }
 
-  Widget _buildSocialButton(String text, IconData icon, VoidCallback onTap) {
+  Widget _buildGoogleSignInButton() {
     return GestureDetector(
-      onTap: onTap,
+      onTap: _handleGoogleSignIn,
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: PremiumTheme.spaceMd),
         decoration: BoxDecoration(
+          color: Colors.white,
           border: Border.all(color: PremiumTheme.border, width: 2),
           borderRadius: BorderRadius.circular(PremiumTheme.radiusMd),
+          boxShadow: [PremiumTheme.shadowSm],
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 24),
-            const SizedBox(width: PremiumTheme.spaceSm),
+            Container(
+              width: 24,
+              height: 24,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: const Icon(
+                Icons.g_mobiledata,
+                size: 24,
+                color: Colors.blue,
+              ),
+            ),
+            const SizedBox(width: PremiumTheme.spaceMd),
             Text(
-              text,
+              'Continue with Google',
               style: PremiumTheme.labelLarge.copyWith(
                 fontWeight: FontWeight.w600,
+                color: PremiumTheme.textPrimary,
               ),
             ),
           ],

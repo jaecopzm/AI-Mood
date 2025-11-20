@@ -265,7 +265,9 @@ class InputValidators {
     if (password.length >= 8) strength++;
     if (password.length >= 12) strength++;
     if (_uppercaseRegex.hasMatch(password) &&
-        _lowercaseRegex.hasMatch(password)) strength++;
+        _lowercaseRegex.hasMatch(password)) {
+      strength++;
+    }
     if (_numberRegex.hasMatch(password)) strength++;
     if (_specialCharRegex.hasMatch(password)) strength++;
 

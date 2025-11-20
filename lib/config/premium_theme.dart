@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 /// Premium Theme Configuration with Modern Design System
+/// This is the MAIN theme file - all other theme files will be deleted
 class PremiumTheme {
   // ============================================
   // PREMIUM COLOR PALETTE - Vibrant & Bold

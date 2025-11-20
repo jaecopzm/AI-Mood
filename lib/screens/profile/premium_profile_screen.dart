@@ -3,7 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../config/premium_theme.dart';
 import '../../widgets/premium_widgets.dart';
 import '../../providers/auth_provider.dart';
-import '../../providers/message_provider.dart';
+import '../../providers/enhanced_message_provider.dart';
+import '../../providers/subscription_provider.dart';
+import '../../models/subscription_model.dart';
+import '../../services/analytics_service.dart';
+import '../../core/di/service_locator.dart';
+import '../subscription/paywall_screen.dart';
+import '../templates/template_browser_screen.dart';
 
 class PremiumProfileScreen extends ConsumerStatefulWidget {
   const PremiumProfileScreen({super.key});
@@ -16,11 +22,27 @@ class PremiumProfileScreen extends ConsumerStatefulWidget {
 class _PremiumProfileScreenState extends ConsumerState<PremiumProfileScreen> {
   bool _isDarkMode = false;
   bool _notificationsEnabled = true;
+  late AnalyticsService _analytics;
+
+  @override
+  void initState() {
+    super.initState();
+    _analytics = getIt<AnalyticsService>();
+
+    // Track screen view
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final authState = ref.read(authStateProvider);
+      if (authState.user != null) {
+        _analytics.trackScreenView(authState.user!.uid, 'profile');
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authStateProvider);
-    final messageState = ref.watch(messageProvider);
+    final messageState = ref.watch(enhancedMessageProvider);
+    final subscriptionState = ref.watch(subscriptionProvider);
 
     return Scaffold(
       body: Container(
@@ -28,7 +50,7 @@ class _PremiumProfileScreenState extends ConsumerState<PremiumProfileScreen> {
           gradient: LinearGradient(
             colors: [
               PremiumTheme.background,
-              PremiumTheme.accentLight.withOpacity(0.05),
+              PremiumTheme.accentLight.withValues(alpha: 0.05),
             ],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
@@ -44,7 +66,9 @@ class _PremiumProfileScreenState extends ConsumerState<PremiumProfileScreen> {
               SliverToBoxAdapter(child: _buildStatsOverview(messageState)),
 
               // Subscription Status
-              SliverToBoxAdapter(child: _buildSubscriptionStatus()),
+              SliverToBoxAdapter(
+                child: _buildSubscriptionStatus(subscriptionState),
+              ),
 
               // Usage Analytics
               SliverToBoxAdapter(child: _buildUsageAnalytics()),
@@ -82,7 +106,7 @@ class _PremiumProfileScreenState extends ConsumerState<PremiumProfileScreen> {
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: PremiumTheme.primary.withOpacity(0.3),
+                      color: PremiumTheme.primary.withValues(alpha: 0.3),
                       blurRadius: 30,
                       spreadRadius: 5,
                     ),
@@ -244,11 +268,18 @@ class _PremiumProfileScreenState extends ConsumerState<PremiumProfileScreen> {
     );
   }
 
-  Widget _buildSubscriptionStatus() {
+  Widget _buildSubscriptionStatus(SubscriptionState subscriptionState) {
+    final usage = subscriptionState.usage;
+    final tier = subscriptionState.currentTier;
+
     return Padding(
       padding: const EdgeInsets.all(PremiumTheme.spaceLg),
       child: PremiumCard(
-        gradient: PremiumTheme.diamondGradient,
+        gradient: tier == SubscriptionTier.premium
+            ? PremiumTheme.diamondGradient
+            : tier == SubscriptionTier.pro
+            ? PremiumTheme.primaryGradient
+            : null,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -257,11 +288,19 @@ class _PremiumProfileScreenState extends ConsumerState<PremiumProfileScreen> {
                 Container(
                   padding: const EdgeInsets.all(PremiumTheme.spaceSm),
                   decoration: BoxDecoration(
-                    gradient: PremiumTheme.goldGradient,
+                    gradient: tier == SubscriptionTier.premium
+                        ? PremiumTheme.goldGradient
+                        : tier == SubscriptionTier.pro
+                        ? PremiumTheme.primaryGradient
+                        : PremiumTheme.secondaryGradient,
                     borderRadius: BorderRadius.circular(PremiumTheme.radiusMd),
                   ),
-                  child: const Icon(
-                    Icons.diamond,
+                  child: Icon(
+                    tier == SubscriptionTier.premium
+                        ? Icons.diamond
+                        : tier == SubscriptionTier.pro
+                        ? Icons.star
+                        : Icons.person,
                     color: Colors.white,
                     size: 24,
                   ),
@@ -272,13 +311,15 @@ class _PremiumProfileScreenState extends ConsumerState<PremiumProfileScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Premium Plan',
+                        '${tier.displayName} Plan',
                         style: PremiumTheme.titleLarge.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                       Text(
-                        'Unlimited access',
+                        usage?.messagesLimit == -1
+                            ? 'Unlimited access'
+                            : '${usage?.messagesUsedThisMonth ?? 0}/${usage?.messagesLimit ?? 0} messages',
                         style: PremiumTheme.bodySmall.copyWith(
                           color: PremiumTheme.textSecondary,
                         ),
@@ -286,51 +327,50 @@ class _PremiumProfileScreenState extends ConsumerState<PremiumProfileScreen> {
                     ],
                   ),
                 ),
-                Text(
-                  '\$9.99/mo',
-                  style: PremiumTheme.titleLarge.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: PremiumTheme.primary,
+                if (tier != SubscriptionTier.premium)
+                  IconButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const PaywallScreen(),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.arrow_forward),
                   ),
-                ),
               ],
             ),
-            const SizedBox(height: PremiumTheme.spaceLg),
-            Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Next Billing',
-                        style: PremiumTheme.bodySmall.copyWith(
-                          color: PremiumTheme.textSecondary,
-                        ),
-                      ),
-                      const SizedBox(height: PremiumTheme.spaceXs),
-                      Text(
-                        'Jan 15, 2024',
-                        style: PremiumTheme.titleMedium.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
+            if (usage != null && usage.messagesLimit != -1) ...[
+              const SizedBox(height: PremiumTheme.spaceLg),
+              PremiumProgressBar(
+                progress: usage.usagePercentage / 100,
+                gradient: tier == SubscriptionTier.pro
+                    ? PremiumTheme.primaryGradient
+                    : PremiumTheme.secondaryGradient,
+              ),
+              const SizedBox(height: PremiumTheme.spaceXs),
+              Text(
+                'Resets in ${usage.daysUntilReset} days',
+                style: PremiumTheme.bodySmall.copyWith(
+                  color: PremiumTheme.textSecondary,
                 ),
-                PremiumButton(
-                  text: 'Manage',
-                  icon: Icons.settings,
-                  gradient: PremiumTheme.primaryGradient,
-                  isFullWidth: false,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: PremiumTheme.spaceMd,
-                    vertical: PremiumTheme.spaceSm,
-                  ),
-                  onPressed: () {},
+              ),
+            ],
+            if (tier != SubscriptionTier.free) ...[
+              const SizedBox(height: PremiumTheme.spaceLg),
+              PremiumButton(
+                text: 'Manage Subscription',
+                icon: Icons.settings,
+                gradient: PremiumTheme.primaryGradient,
+                isFullWidth: true,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: PremiumTheme.spaceMd,
+                  vertical: PremiumTheme.spaceSm,
                 ),
-              ],
-            ),
+                onPressed: () {},
+              ),
+            ],
           ],
         ),
       ),
@@ -468,6 +508,20 @@ class _PremiumProfileScreenState extends ConsumerState<PremiumProfileScreen> {
                     },
                     activeThumbColor: PremiumTheme.primary,
                   ),
+                ),
+                _buildDivider(),
+                _buildSettingItem(
+                  Icons.text_snippet,
+                  'Message Templates',
+                  'Browse premium templates',
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const TemplateBrowserScreen(),
+                      ),
+                    );
+                  },
                 ),
                 _buildDivider(),
                 _buildSettingItem(

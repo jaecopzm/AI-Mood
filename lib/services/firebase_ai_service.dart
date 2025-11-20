@@ -1,81 +1,243 @@
+import 'dart:async';
 import 'package:firebase_ai/firebase_ai.dart';
 import 'package:firebase_core/firebase_core.dart';
 import '../firebase_options.dart';
 import '../core/utils/result.dart';
+import '../core/services/connectivity_service.dart';
+import 'message_cache_service.dart';
+import '../core/services/logger_service.dart';
+import '../models/message_model.dart';
+import 'package:uuid/uuid.dart';
 
 class FirebaseAIService {
   GenerativeModel? _model;
   bool _isInitialized = false;
+  final ConnectivityService _connectivityService = ConnectivityService();
+  final MessageCacheService _cacheService = MessageCacheService();
+  final Uuid _uuid = const Uuid();
+  
+  // Retry configuration
+  static const int _maxRetries = 3;
+  static const Duration _retryDelay = Duration(seconds: 2);
+  static const Duration _requestTimeout = Duration(seconds: 45);
 
   /// Initialize Firebase AI service
   Future<void> initialize() async {
     if (_isInitialized) return;
 
     try {
-      print('🔧 Initializing Firebase AI service...');
+      LoggerService.info('🔧 Initializing Firebase AI service...');
+      
+      // Initialize connectivity service
+      await _connectivityService.initialize();
+      
+      // Initialize cache service
+      await _cacheService.initialize();
       
       // Initialize FirebaseApp if not already done
       if (Firebase.apps.isEmpty) {
-        print('🔥 Initializing Firebase app...');
+        LoggerService.info('🔥 Initializing Firebase app...');
         await Firebase.initializeApp(
           options: DefaultFirebaseOptions.currentPlatform,
         );
-        print('✅ Firebase app initialized');
+        LoggerService.info('✅ Firebase app initialized');
       }
 
       // Initialize the Firebase AI service
       // Create a GenerativeModel instance with Gemini model
-      print('🤖 Creating Gemini model instance...');
-      _model = FirebaseAI.googleAI().generativeModel(model: 'gemini-1.5-flash');
+      LoggerService.info('🤖 Creating Gemini model instance...');
+      _model = FirebaseAI.googleAI().generativeModel(model: 'gemini-2.5-flash');
       _isInitialized = true;
       
-      print('✅ Firebase AI service initialized successfully');
-    } catch (e) {
-      print('❌ Failed to initialize Firebase AI: $e');
+      LoggerService.info('✅ Firebase AI service initialized successfully');
+    } catch (e, stackTrace) {
+      LoggerService.error('❌ Failed to initialize Firebase AI', e, stackTrace);
       // Still mark as initialized so we can use fallbacks
       _isInitialized = true;
     }
   }
 
   /// Generate a personalized message using Firebase AI (Gemini)
-  Future<String> generateMessage({
+  Future<Result<MessageModel>> generateMessage({
     required String recipient,
     required String tone,
     required String context,
     required int wordLimit,
+    String? userId,
   }) async {
-    if (!_isInitialized || _model == null) {
+    if (!_isInitialized) {
       await initialize();
     }
 
-    try {
-      // Build the prompt based on user input
-      final prompt = _buildPrompt(
+    // Check connectivity first
+    if (!_connectivityService.isConnected) {
+      LoggerService.warning('📱 Offline mode: Using cached/fallback message');
+      return _generateOfflineMessage(
         recipient: recipient,
         tone: tone,
         context: context,
         wordLimit: wordLimit,
+        userId: userId ?? 'anonymous',
+      );
+    }
+
+    // Check cache first for similar requests
+    final cachedMessage = _cacheService.getCachedMessage(recipient, tone, context);
+    if (cachedMessage != null) {
+      LoggerService.info('📦 Using cached message for similar request');
+      return Result.success(cachedMessage);
+    }
+
+    // Try to generate with retry logic
+    return await _generateWithRetry(
+      recipient: recipient,
+      tone: tone,
+      context: context,
+      wordLimit: wordLimit,
+      userId: userId ?? 'anonymous',
+    );
+  }
+
+  /// Generate message with retry logic and error handling
+  Future<Result<MessageModel>> _generateWithRetry({
+    required String recipient,
+    required String tone,
+    required String context,
+    required int wordLimit,
+    required String userId,
+  }) async {
+    Exception? lastException;
+
+    for (int attempt = 1; attempt <= _maxRetries; attempt++) {
+      try {
+        LoggerService.info('🤖 Firebase AI: Attempt $attempt/$_maxRetries');
+
+        if (_model == null) {
+          throw Exception('Firebase AI model not initialized');
+        }
+
+        // Build the prompt based on user input
+        final prompt = _buildPrompt(
+          recipient: recipient,
+          tone: tone,
+          context: context,
+          wordLimit: wordLimit,
+        );
+
+        LoggerService.debug('🤖 Firebase AI: Generating content with prompt length: ${prompt.length}');
+
+        // Generate content with timeout
+        final response = await _model!.generateContent([Content.text(prompt)])
+            .timeout(_requestTimeout);
+
+        LoggerService.info('📝 Firebase AI: Response received');
+
+        if (response.text != null && response.text!.isNotEmpty) {
+          final generatedText = _cleanAndValidateResponse(response.text!);
+          
+          LoggerService.info('✅ Firebase AI: Generated text with length: ${generatedText.length}');
+
+          // Create message model
+          final message = MessageModel(
+            id: _uuid.v4(),
+            userId: userId,
+            recipientType: recipient,
+            tone: tone,
+            context: context,
+            generatedText: generatedText,
+            variations: [], // Will be populated by separate method
+            wordLimit: wordLimit,
+            createdAt: DateTime.now(),
+            isSaved: false,
+          );
+
+          // Cache the successful result
+          await _cacheService.cacheMessage(message);
+
+          return Result.success(message);
+        } else {
+          throw Exception('Empty response from Firebase AI');
+        }
+      } on TimeoutException catch (e) {
+        lastException = Exception('Request timeout: ${e.toString()}');
+        LoggerService.warning('⏱️ Firebase AI timeout on attempt $attempt');
+      } catch (e) {
+        lastException = Exception('Firebase AI error: ${e.toString()}');
+        LoggerService.warning('❌ Firebase AI error on attempt $attempt: $e');
+      }
+
+      // Wait before retry (except on last attempt)
+      if (attempt < _maxRetries) {
+        await Future.delayed(_retryDelay * attempt); // Progressive delay
+      }
+    }
+
+    // All retries failed, use fallback
+    LoggerService.error('❌ All Firebase AI attempts failed, using fallback', lastException);
+    return _generateOfflineMessage(
+      recipient: recipient,
+      tone: tone,
+      context: context,
+      wordLimit: wordLimit,
+      userId: userId,
+    );
+  }
+
+  /// Generate offline message using cached templates
+  Result<MessageModel> _generateOfflineMessage({
+    required String recipient,
+    required String tone,
+    required String context,
+    required int wordLimit,
+    required String userId,
+  }) {
+    try {
+      final fallbackText = _cacheService.getOfflineFallbackMessage(
+        recipientType: recipient,
+        tone: tone,
+        context: context,
       );
 
-      print('🤖 Firebase AI: Generating content with prompt length: ${prompt.length}');
-      
-      // Generate content using Firebase AI
-      final response = await _model!.generateContent([Content.text(prompt)]);
-      
-      print('📝 Firebase AI: Response received');
-      
-      if (response.text != null && response.text!.isNotEmpty) {
-        print('✅ Firebase AI: Generated text with length: ${response.text!.length}');
-        return response.text!;
-      } else {
-        throw Exception('No response text in Firebase AI response');
-      }
+      final message = MessageModel(
+        id: _uuid.v4(),
+        userId: userId,
+        recipientType: recipient,
+        tone: tone,
+        context: context,
+        generatedText: fallbackText,
+        variations: [],
+        wordLimit: wordLimit,
+        createdAt: DateTime.now(),
+        isSaved: false,
+      );
+
+      LoggerService.info('📱 Generated offline fallback message');
+      return Result.success(message);
     } catch (e) {
-      print('❌ Firebase AI Error: $e');
-      
-      // Return a fallback message instead of throwing
-      return _getFallbackMessage(recipient, tone, context);
+      LoggerService.error('Failed to generate offline message', e);
+      return Result.failure(Exception('Unable to generate message offline: $e'));
     }
+  }
+
+  /// Clean and validate AI response
+  String _cleanAndValidateResponse(String text) {
+    // Remove common AI artifacts
+    String cleaned = text.trim();
+    
+    // Remove quotation marks if the entire text is wrapped in them
+    if (cleaned.startsWith('"') && cleaned.endsWith('"')) {
+      cleaned = cleaned.substring(1, cleaned.length - 1);
+    }
+    
+    // Remove excessive whitespace
+    cleaned = cleaned.replaceAll(RegExp(r'\s+'), ' ');
+    
+    // Ensure proper capitalization
+    if (cleaned.isNotEmpty) {
+      cleaned = cleaned[0].toUpperCase() + cleaned.substring(1);
+    }
+    
+    return cleaned;
   }
 
   /// Generate multiple message variations
